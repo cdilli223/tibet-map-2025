@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map Starter</title>
+    <!-- Load Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        #map {
+            height: 100vh;
+            max-height: calc(100vh - 4rem);
+            z-index: 0;
+            border-radius: 0.75rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-[#0a1833] font-sans p-4 sm:p-6">
+    <header class="text-center mb-6">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Ecopolitical Facts of Tibet</h1>
+        <p class="text-lg text-gray-200 mt-2">Sponsored by Google Earth</p>
+    </header>
+    <div id="map" class="w-full"></div>
+    <footer class="text-center mt-4 text-gray-300 text-sm">
+        Data provided by custom image overlay | Example: Tibet-Current.jpg
+    </footer>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20n6a9OcT5S+-pQj6YSo8+nv+q1bncI+8wF3S7xYI=" crossorigin=""></script>
+    <script>
+        // Custom image map constants
+        const IMAGE_URL = 'images/Tibet-Current.jpg'; // Update with your image path
+        const IMAGE_WIDTH = 2000; // px (set to your image's width)
+        const IMAGE_HEIGHT = 1500; // px (set to your image's height)
+        const MAP_ID = 'map';
+
+        window.onload = function() {
+            try {
+                // Use Leaflet's simple CRS for pixel coordinates
+                const bounds = [[0,0], [IMAGE_HEIGHT, IMAGE_WIDTH]];
+                const map = L.map(MAP_ID, {
+                    crs: L.CRS.Simple,
+                    minZoom: -2,
+                    maxZoom: 2,
+                    zoomSnap: 0.25,
+                });
+                map.fitBounds(bounds);
+
+                // Add the image overlay
+                L.imageOverlay(IMAGE_URL, bounds).addTo(map);
+
+                // Example marker (at pixel coordinates)
+                const marker = L.marker([IMAGE_HEIGHT/2, IMAGE_WIDTH/2], {
+                    draggable: true
+                }).addTo(map);
+                marker.bindPopup("<b>Custom Map!</b><br>This marker is centered on the image.").openPopup();
+
+                // Handle map click events (show pixel coordinates)
+                map.on('click', function(e) {
+                    const y = e.latlng.lat.toFixed(0);
+                    const x = e.latlng.lng.toFixed(0);
+                    L.popup()
+                        .setLatLng(e.latlng)
+                        .setContent(`<div class='font-bold'>Image Clicked!</div><small>X: ${x}, Y: ${y}</small>`)
+                        .openOn(map);
+                });
+
+            } catch (error) {
+                console.error("Failed to initialize Leaflet image map:", error);
+                const mapDiv = document.getElementById(MAP_ID);
+                if (mapDiv) {
+                    mapDiv.innerHTML = '<div class="p-6 bg-red-100 text-red-700 text-center rounded-lg">Error loading map. Check console for details.</div>';
+                }
+            }
+        };
+
+        // Ensures the map is rendered correctly on window resize
+        window.onresize = function() {
+            const mapDiv = document.getElementById(MAP_ID);
+            if (mapDiv && mapDiv._leaflet_map) {
+                mapDiv._leaflet_map.invalidateSize();
+            }
+        }
+    </script>
+</body>
+</html>
