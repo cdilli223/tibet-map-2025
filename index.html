@@ -6,7 +6,14 @@
     <title>Interactive Map Starter</title>
     <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Elegant display font for title and map (load 400/700/900 weights) -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
     <style>
+        /* Prevent site-wide horizontal overflow */
+        html, body {
+            max-width: 100vw;
+            overflow-x: hidden;
+        }
         #map {
             height: 80vh; /* slightly shorter to avoid overflow */
             max-height: calc(100vh - 8rem);
@@ -14,7 +21,7 @@
             position: relative; /* allow absolutely positioned overlay inside */
             border-radius: 0.75rem;
             box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
-            background: #0f1b3d; /* subtle dark background around image */
+            background: #d2c396; /* subtle dark background around image  */
         }
         .map-frame {
             border-radius: 0.75rem;
@@ -44,10 +51,61 @@
             color: #111827;
         }
 
+        /* Year navigation control styling */
+        .year-control a.year-btn {
+            font-size: 16px;
+            width: 34px;
+            height: 34px;
+            line-height: 34px;
+            text-align: center;
+            background: #fef3c7; /* amber-100 */
+            color: #111827;
+        }
+        .year-control a.year-btn.disabled { opacity: 0.4; pointer-events: none; }
+
         /* Keep Leaflet controls above custom image layer */
         .leaflet-top, .leaflet-bottom { z-index: 500 !important; }
         /* Ensure popups/tooltips render above image */
         .leaflet-popup-pane, .leaflet-tooltip-pane { z-index: 600 !important; }
+        /* Title badge styling: align toward back (bottom) and apply vertical fade */
+        #title-badge {
+            object-position: center bottom;
+            /* vertical fade using CSS mask for smooth top/bottom blending */
+            -webkit-mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+            mask-image: linear-gradient(to bottom, rgba(0,0,0,0) 0%, rgba(0,0,0,1) 25%, rgba(0,0,0,1) 75%, rgba(0,0,0,0) 100%);
+        }
+        /* Map elements use the elegant display font (normal weight) */
+        .leaflet-container,
+        .leaflet-popup-content,
+        .leaflet-tooltip,
+        .leaflet-control {
+            font-family: 'Cinzel', serif;
+            font-weight: 400;
+            letter-spacing: 0.01em;
+        }
+        /* Bold names, normal bodies inside map popups/tooltips */
+        .leaflet-popup-content .map-title,
+        .leaflet-tooltip.map-tooltip-title {
+            font-weight: 700;
+            letter-spacing: 0.02em;
+        }
+        .leaflet-popup-content .map-body { font-weight: 400; }
+
+        /* Lift-off effect for markers when returning Home */
+        @keyframes liftOffMarkers {
+            0% { transform: scale(0.85); opacity: 0.6; }
+            60% { transform: scale(1.05); opacity: 0.9; }
+            100% { transform: scale(1.0); opacity: 1.0; }
+        }
+        .lift-off .leaflet-marker-pane .leaflet-marker-icon,
+        .lift-off .leaflet-marker-pane .leaflet-div-icon {
+            animation: liftOffMarkers 600ms ease-out both;
+            will-change: transform, opacity;
+        }
+
+        /* Smooth fade-in for markers when returning Home */
+        .leaflet-marker-pane { transition: opacity 600ms ease; }
+        .markers-fade .leaflet-marker-pane { opacity: 0; }
     </style>
     <!-- Leaflet CSS (without SRI to avoid preview/CDN quirks) -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
@@ -57,42 +115,44 @@
                 extend: {
                     fontFamily: {
                         sans: ['Inter', 'sans-serif'],
+                        display: ['Cinzel', 'serif'],
                     }
                 }
             }
         }
     </script>
 </head>
-<body class="bg-[#0a1833] font-sans p-4 sm:p-6">
+<body class="bg-[#c3997d] font-serif p-4 sm:p-6">
     <header class="text-center mb-6">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Historical Hydrology of Tibet</h1>
-        <p class="text-lg text-gray-200 mt-2">Images Sourced from Google Earth</p>
+        <div class="relative inline-block px-3 py-2">
+            <!-- Background badge behind text -->
+            <img id="title-badge" src="" alt="Title Badge" class="absolute inset-0 w-full h-full object-contain opacity-0 pointer-events-none" style="z-index:0;" />
+            <div class="relative" style="z-index:1;">
+                <h1 class="text-3xl sm:text-4xl font-bold text-teal-950 font-display tracking-wider">Historical Hydrology of Tibet</h1>
+            </div>
+        </div>
     </header>
-    <div class="map-frame">
-        <div id="map" class="w-full">
+    <div class="map-frame" style="max-width:100vw;">
+        <div id="map" class="w-full" style="max-width:100vw;">
             <!-- Static full-size POI image layer (not tied to Leaflet zoom) -->
             <div id="poi-image-layer" style="position:absolute; inset:0; pointer-events:none; z-index:300;">
                 <img id="poi-image" alt="POI Image" style="width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity 600ms ease;" />
-                            // Fine-tuned frame bounds to better center on POI
-                            overlayBounds: [[220,2060],[400,2260]],
-                            preferPointCenter: true, // fall back to point-centered zoom if bounds feel awkward
+                    <img id="poi-image" alt="POI Image" style="width:100%; height:100%; object-fit:contain; object-position:center center; opacity:0; transition:opacity 600ms ease; transform-origin:50% 50%;" />
+            </div>
         </div>
     </div>
-    <!-- Optional: Debug preview (commented out for production look) -->
-    <!--
-    <div class="mt-4 text-center">
-        <p class="text-gray-300 text-sm">Debug preview of image path:</p>
-        <img src="images/Tibet-Current.jpg" alt="Debug Tibet Image" class="inline-block max-w-full h-auto rounded"/>
-    </div>
-    -->
-    <footer class="text-center mt-4 text-gray-300 text-sm">
-        Data provided by custom image overlay | Example: Tibet-Current.jpg
-                // Refined frame bounds closer to the right-side area
-                overlayBounds: [[240,2120],[380,2280]],
-                preferPointCenter: false,
+    <footer class="text-center mt-4 text-gray-500 text-sm">
+        Images Sourced from Google Earth and Public Domain Archives
+    </footer>
+    <!-- Leaflet JS (without SRI to avoid preview/CDN quirks) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
     <script>
         // Image map config (auto-detects size; falls back if needed)
         const IMAGE_URL = 'images/tibet_2020.jpg';
+        // Optional title badge image; set the path when provided
+        const TITLE_BADGE_URL = 'images/Avalokiteśvara.jpg';
+        // Scale factor for the title badge behind text (1.0 = natural size)
+        const TITLE_BADGE_SCALE = 15;
         // Optional global hi-res image (same aspect ratio)
         // const HIRES_IMAGE_URL = 'images/Tibet-Current-2x.jpg';
         // Optional region-specific hi-res patches: pixel bounds and image URLs
@@ -102,40 +162,69 @@
         const FALLBACK_WIDTH = 2900;
         const FALLBACK_HEIGHT = 1500;
         const MAP_ID = 'map';
+        // Candidate years to step through; adjust to your dataset
+        const YEAR_CANDIDATES = [1984, 1990, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2010, 2020];
         // Example points of interest: pixel coords with optional zoom image and info
         const POIS = [
             {
                 name: 'Himalaya Mountains',
-                xy: [170, 1100],
-                overlayBounds: [[140,1060],[200,1140]], // cropped region for detail overlay
+                xy: [230, 1100],
+                overlayBounds: [[200,1060],[260,1140]], // cropped region for detail overlay
                 image: 'images/himalaya_1984.jpg',
-                info: 'Himalayan range overview.'
+                info: 'Himalayan range overview.',
+                scale: 0.98
             },
             {
                 name: 'Central Tibetan Lakes',
                 xy: [620, 1325],
                 overlayBounds: [[580,1285],[660,1365]],
                 image: 'images/central_lakes_1984.jpg',
-                info: 'Central Tibetan lakes cluster.'
+                info: 'Central Tibetan lakes cluster.',
+                scale: 0.98
             },
             {
                 name: 'Arunachal Pradesh Border',
                 xy: [310, 2160],
-                overlayBounds: [[0,0],[340,2200]],
+                overlayBounds: [[280,2120],[340,2200]],
                 image: 'images/arunachal_1984.jpg',
-                info: 'Eastern border area detail.'
+                info: 'Eastern border area detail.',
+                scale: 0.98
             },
             {
                 name: 'Kanbula',
                 xy: [1020, 2600],
                 overlayBounds: [[980,2560],[1060,2640]],
                 image: 'images/kanbula_1984.jpg',
-                info: 'Kanbula region detail.'
+                info: 'Kanbula region detail.',
+                scale: 0.98
+            },
+            {
+                name: 'Yurba',
+                xy: [950, 1350],
+                overlayBounds: [[920, 1310], [980, 1390]],
+                image: 'images/yurba_1984.jpg',
+                info: 'Yurba lake detail.',
+                scale: 0.98
             }
         ];
 
         window.onload = function() {
             try {
+                // Load title badge if URL is set
+                (function(){
+                    if (TITLE_BADGE_URL) {
+                        const badgeImg = document.getElementById('title-badge');
+                        if (badgeImg) {
+                            badgeImg.onload = function(){
+                                badgeImg.style.opacity = '0.4';
+                                badgeImg.style.transform = `scale(${TITLE_BADGE_SCALE})`;
+                                badgeImg.style.transformOrigin = '50% 50%';
+                            };
+                            badgeImg.onerror = function(){ badgeImg.style.opacity = '0'; };
+                            badgeImg.src = TITLE_BADGE_URL;
+                        }
+                    }
+                })();
                 const imgProbe = new Image();
                 imgProbe.onload = function() {
                     const imgW = imgProbe.naturalWidth || FALLBACK_WIDTH;
@@ -155,13 +244,14 @@
                         keyboard: false,
                         attributionControl: false,
                         minZoom: -1.1, // allow zooming out to see full image
-                        maxZoom: 1.5   // cap zoom-in to prevent pixelation blowout
+                        maxZoom: 1.5,  // cap zoom-in to prevent pixelation blowout
+                        maxBoundsViscosity: 1.0,     // hard stop at image edges
+                        inertia: false               // prevent kinetic overscroll
                     });
 
-                    // Fit and constrain to image bounds
-                    // Fit image with gentle padding and limit panning beyond edges
-                    map.fitBounds(bounds, { padding: [40, 40] });
-                    map.setMaxBounds(L.latLngBounds(bounds).pad(0.05));
+                    // Fit and constrain to image bounds (no extra pad to avoid side panning)
+                    map.fitBounds(bounds, { padding: [16, 16] });
+                    map.setMaxBounds(L.latLngBounds(bounds));
 
                     // Base overlay
                     let baseOverlay = L.imageOverlay(IMAGE_URL, bounds, {
@@ -208,6 +298,92 @@
                     const poiImgEl = document.getElementById('poi-image');
                     const poiImgLayer = document.getElementById('poi-image-layer');
 
+                    // Track current POI image info for year navigation
+                    let currentPoiBase = null; // e.g., 'himalaya'
+                    let currentPoiYear = null; // e.g., 1984
+                    let currentPoiExt = 'jpg'; // default extension
+                    let currentPoiScale = 1.0;
+                    let poiActive = false;
+                    let yearPrevBtn = null, yearNextBtn = null;
+
+                    function updateYearButtons() {
+                        if (!yearPrevBtn || !yearNextBtn) return;
+                        if (poiActive && currentPoiBase) {
+                            yearPrevBtn.classList.remove('disabled');
+                            yearNextBtn.classList.remove('disabled');
+                        } else {
+                            yearPrevBtn.classList.add('disabled');
+                            yearNextBtn.classList.add('disabled');
+                        }
+                    }
+
+                    function parseImageInfo(url) {
+                        try {
+                            const name = url.split('/').pop();
+                            if (!name) return null;
+                            const m = name.match(/^(.+?)_(\d{3,4})\.(jpg|jpeg|png|webp)$/i);
+                            if (m) {
+                                return { base: m[1], year: parseInt(m[2], 10), ext: m[3].toLowerCase() };
+                            }
+                            const m2 = name.match(/^(.+?)\.(jpg|jpeg|png|webp)$/i);
+                            if (m2) {
+                                return { base: m2[1], year: null, ext: m2[2].toLowerCase() };
+                            }
+                        } catch (e) {}
+                        return null;
+                    }
+
+                    function findNextYear(curr) {
+                        if (curr == null) return YEAR_CANDIDATES[0] || null;
+                        for (let i = 0; i < YEAR_CANDIDATES.length; i++) {
+                            if (YEAR_CANDIDATES[i] > curr) return YEAR_CANDIDATES[i];
+                        }
+                        return null;
+                    }
+                    function findPrevYear(curr) {
+                        if (curr == null) return YEAR_CANDIDATES[YEAR_CANDIDATES.length - 1] || null;
+                        for (let i = YEAR_CANDIDATES.length - 1; i >= 0; i--) {
+                            if (YEAR_CANDIDATES[i] < curr) return YEAR_CANDIDATES[i];
+                        }
+                        return null;
+                    }
+
+                    function crossfadePoiToUrl(newUrl) {
+                        if (!poiImgEl || !newUrl) return;
+                        const ghost = document.createElement('img');
+                        ghost.src = poiImgEl.src || '';
+                        ghost.alt = 'POI Ghost';
+                        ghost.style.cssText = 'position:absolute; inset:0; width:100%; height:100%; object-fit:contain; object-position:center center; pointer-events:none; transform-origin:50% 50%; opacity:1; transition:opacity 400ms ease;';
+                        if (currentPoiScale) ghost.style.transform = `scale(${currentPoiScale})`;
+                        poiImgLayer.appendChild(ghost);
+
+                        const loader = new Image();
+                        loader.onload = function () {
+                            // Prepare live image beneath ghost
+                            if (currentPoiScale) poiImgEl.style.transform = `scale(${currentPoiScale})`;
+                            poiImgEl.style.opacity = '0';
+                            poiImgEl.src = newUrl;
+                            // Wait a tick to ensure DOM applied
+                            requestAnimationFrame(() => {
+                                poiImgEl.style.opacity = '1';
+                                // Fade ghost out and remove
+                                requestAnimationFrame(() => {
+                                    ghost.style.opacity = '0';
+                                    setTimeout(() => ghost.remove(), 420);
+                                });
+                            });
+                        };
+                        loader.onerror = function(){ console.warn('Failed to load year image:', newUrl); };
+                        loader.src = newUrl;
+                    }
+
+                    function goToYear(targetYear) {
+                        if (!currentPoiBase || !targetYear) return;
+                        const url = `images/${currentPoiBase}_${targetYear}.${currentPoiExt || 'jpg'}`;
+                        crossfadePoiToUrl(url);
+                        currentPoiYear = targetYear;
+                    }
+
                     // Store map reference for resize handler
                     const mapDivRef = document.getElementById(MAP_ID);
                     if (mapDivRef) {
@@ -239,50 +415,54 @@
                             iconAnchor: [8,8]
                         });
                         const m = L.marker(p.xy, { icon, riseOnHover: true }).addTo(markerLayer);
-                        m.bindTooltip(p.name, {permanent: false});
+                        m.bindTooltip(p.name, { permanent: false, className: 'map-tooltip-title' });
                         m.on('click', () => {
                             // Zoom the map to frame the POI area, then crossfade to a static full-size image
-                            const flyDuration = 0.6; // seconds (sync with fadeDuration)
+                            const flyDuration = 0.9; // seconds (sync with fadeDuration)
                             const hasBounds = Array.isArray(p.overlayBounds) && p.overlayBounds.length === 2;
                             if (hasBounds && !p.preferPointCenter) {
-                                map.flyToBounds(p.overlayBounds, { animate: true, duration: flyDuration, padding: [24, 24] });
-                                // After bounds fly, nudge center to exact POI point to avoid lateral drift
-                                const afterBoundsCenter = () => {
-                                    map.off('moveend', afterBoundsCenter);
-                                    map.panTo(p.xy, { animate: true, duration: 0.3 });
-                                };
-                                map.on('moveend', afterBoundsCenter);
+                                map.flyToBounds(p.overlayBounds, { animate: true, duration: flyDuration, padding: [16, 16] });
                             } else {
                                 const preZoom = map.getZoom();
-                                const approachZoom = Math.min(preZoom + 1.1, map.getMaxZoom());
+                                const approachZoom = Math.min(preZoom + 1.0, map.getMaxZoom());
                                 map.flyTo(p.xy, approachZoom, { animate: true, duration: flyDuration });
                             }
 
                             // Crossfade from base map to static full-size POI image (DOM overlay), no zoom on image
                             if (p.image && poiImgEl) {
                                 const loader = new Image();
+                                    // Apply optional per-POI scale (defaults to 1.0)
+                                    const scale = typeof p.scale === 'number' ? p.scale : 1.0;
+                                    poiImgEl.style.transform = `scale(${scale})`;
+                                    currentPoiScale = scale;
+                                    const info = parseImageInfo(p.image);
+                                    if (info) {
+                                        currentPoiBase = info.base;
+                                        currentPoiYear = info.year;
+                                        currentPoiExt = info.ext || 'jpg';
+                                    } else {
+                                        currentPoiBase = null;
+                                        currentPoiYear = null;
+                                        currentPoiExt = 'jpg';
+                                    }
                                 loader.onload = function() {
                                     poiImgEl.src = p.image;
-                                    // synchronize fade to after map finishes moving
-                                    let started = false;
-                                    const startFade = () => {
-                                        if (started) return; started = true;
-                                        cancelFade = false;
-                                        const start = performance.now();
-                                        function fadeIn(ts) {
-                                            let prog = (ts - start) / fadeDuration;
-                                            if (prog > 1) prog = 1;
-                                            if (cancelFade) prog = 1;
-                                            baseOverlay.setOpacity(0.98 * (1 - prog));
-                                            poiImgEl.style.opacity = String(prog);
-                                            if (!cancelFade && prog < 1) {
-                                                requestAnimationFrame(fadeIn);
-                                            }
+                                    // Start simultaneous crossfade immediately so fade-in and fade-out happen together
+                                    cancelFade = false;
+                                    const start = performance.now();
+                                    function fadeIn(ts) {
+                                        let prog = (ts - start) / fadeDuration;
+                                        if (prog > 1) prog = 1;
+                                        if (cancelFade) prog = 1;
+                                        baseOverlay.setOpacity(0.98 * (1 - prog));
+                                        poiImgEl.style.opacity = String(prog);
+                                        if (!cancelFade && prog < 1) {
+                                            requestAnimationFrame(fadeIn);
                                         }
-                                        requestAnimationFrame(fadeIn);
-                                    };
-                                    const onMoveEnd = () => { map.off('moveend', onMoveEnd); startFade(); };
-                                    map.on('moveend', onMoveEnd);
+                                    }
+                                    requestAnimationFrame(fadeIn);
+                                    poiActive = true;
+                                    updateYearButtons();
                                 };
                                 loader.onerror = function() {
                                     console.error('POI image failed to load:', p.image);
@@ -297,49 +477,95 @@
                             // Show info popup
                             L.popup()
                                 .setLatLng(p.xy)
-                                .setContent(`<div class='text-sm'><div class='font-semibold mb-1'>${p.name}</div><div>${p.info || ''}</div></div>`)
+                                .setContent(`<div class="text-xs"><div class="map-title mb-1">${p.name}</div><div class="map-body">${p.info || ''}</div></div>`)
                                 .openOn(map);
                         });
                     });
 
                     // Home button control to restore full view and overlays
                     function goHome() {
-                        // Abort any active fades & timers, restore base overlay
-                        cancelFade = true;
-                        if (poiOverlayTimer) {
-                            clearTimeout(poiOverlayTimer);
-                            poiOverlayTimer = null;
+                        // Simultaneous fade: base overlay fades in while POI image fades out
+                        const duration = 1.4 * fadeDuration; // keep in sync with marker lift-off
+                        cancelFade = false;
+                        // Leaving POI mode: disable year navigation and clear POI context
+                        poiActive = false;
+                        currentPoiBase = null;
+                        currentPoiYear = null;
+                        updateYearButtons();
+
+                        // Attach lift-off class to map for marker animation
+                        const mapContainer = document.getElementById(MAP_ID);
+                        if (mapContainer) {
+                            mapContainer.classList.add('lift-off');
+                            setTimeout(() => mapContainer.classList.remove('lift-off'), duration);
                         }
-                        // Hide static POI image (DOM overlay)
-                        if (poiImgEl) {
-                            poiImgEl.style.opacity = '0';
-                            // optional: clear src after fade-out
-                            // setTimeout(() => { poiImgEl.src = ''; }, 300);
-                        }
-                        // Ensure base overlay is visible
+
+                        // Ensure base overlay is present
                         if (!map.hasLayer(baseOverlay)) {
                             baseOverlay.addTo(map);
                         }
-                        baseOverlay.setOpacity(0.98);
-                        // Reset overlays to base
+
+                        // If hires overlay is active, swap back to base
                         if (hiresOverlay && map.hasLayer(hiresOverlay)) {
                             map.removeLayer(hiresOverlay);
                         }
-                        if (!map.hasLayer(baseOverlay)) {
-                            baseOverlay.addTo(map);
-                        }
+
+                        // Deactivate any region overlays
                         regionOverlays.forEach(r => {
                             if (r.active) {
                                 map.removeLayer(r.overlay);
                                 r.active = false;
                             }
                         });
-                        // ensure any image overlays are cleared (legacy path)
-                        // currentPoiOverlay removed earlier; keep null
+
+                        // Close any open popups
                         map.closePopup();
-                        // Reset view to full framing of the base image
-                        map.fitBounds(bounds, { padding: [40, 40] });
-                        baseOverlay.setOpacity(0.98);
+
+                        // Animate fade between POI image and base overlay
+                        const startOpacityBase = typeof baseOverlay.options.opacity === 'number' ? baseOverlay.options.opacity : 0.98;
+                        const start = performance.now();
+                        function crossfade(ts) {
+                            let prog = (ts - start) / duration;
+                            if (prog > 1) prog = 1;
+                            if (cancelFade) prog = 1;
+                            // Fade IN base overlay toward full opacity
+                            const baseOpacity = 0.98 * prog + startOpacityBase * (1 - prog);
+                            baseOverlay.setOpacity(baseOpacity);
+                            // Fade OUT POI image
+                            if (poiImgEl) {
+                                const poiOpacity = (1 - prog);
+                                poiImgEl.style.opacity = String(poiOpacity);
+                                if (prog === 1) {
+                                    // optional: clear src after fade completes
+                                    poiImgEl.src = '';
+                                }
+                            }
+                            if (!cancelFade && prog < 1) {
+                                requestAnimationFrame(crossfade);
+                            }
+                        }
+                        requestAnimationFrame(crossfade);
+
+                        // Fly out to full bounds to create zoom-out/lift-off feel
+                        map.flyToBounds(bounds, { animate: true, duration: duration / 1000, padding: [15, 15] });
+
+                        // Fade markers back in synchronized with the end of the fly animation
+                        const mapContainer2 = document.getElementById(MAP_ID);
+                        if (mapContainer2) {
+                            // Start from 0 opacity during the Home transition
+                            mapContainer2.classList.add('markers-fade');
+                            // When zoom/fly ends, remove the class to trigger fade-in
+                            const once = (ev) => {
+                                // small delay to ensure Leaflet finishes DOM class toggles
+                                setTimeout(() => {
+                                    mapContainer2.classList.remove('markers-fade');
+                                }, 20);
+                                map.off('zoomend', once);
+                                map.off('moveend', once);
+                            };
+                            map.on('zoomend', once);
+                            map.on('moveend', once);
+                        }
                     }
 
                     const HomeControl = L.Control.extend({
@@ -356,6 +582,49 @@
                         }
                     });
                     new HomeControl().addTo(map);
+
+                    // Year navigation control (Prev/Next)
+                    function stepYear(direction) {
+                        if (!poiActive || !currentPoiBase || currentPoiYear == null) return;
+                        const nextY = direction > 0 ? findNextYear(currentPoiYear) : findPrevYear(currentPoiYear);
+                        if (nextY && nextY !== currentPoiYear) {
+                            // Attempt to load next; if it fails, try further in the same direction
+                            const candidates = direction > 0 ? YEAR_CANDIDATES.filter(y => y > currentPoiYear) : YEAR_CANDIDATES.filter(y => y < currentPoiYear).reverse();
+                            (function tryNext(i){
+                                if (i >= candidates.length) return;
+                                const y = candidates[i];
+                                const testUrl = `images/${currentPoiBase}_${y}.${currentPoiExt || 'jpg'}`;
+                                const test = new Image();
+                                test.onload = function(){ goToYear(y); };
+                                test.onerror = function(){ tryNext(i+1); };
+                                test.src = testUrl;
+                            })(0);
+                        }
+                    }
+
+                    const YearControl = L.Control.extend({
+                        options: { position: 'topleft' },
+                        onAdd: function() {
+                            const container = L.DomUtil.create('div', 'leaflet-bar year-control');
+                            const prev = L.DomUtil.create('a', 'year-btn', container);
+                            prev.href = '#';
+                            prev.title = 'Previous year';
+                            prev.innerHTML = '‹';
+                            const next = L.DomUtil.create('a', 'year-btn', container);
+                            next.href = '#';
+                            next.title = 'Next year';
+                            next.innerHTML = '›';
+                            yearPrevBtn = prev;
+                            yearNextBtn = next;
+                            L.DomEvent.on(prev, 'click', L.DomEvent.stop)
+                                     .on(prev, 'click', function(){ stepYear(-1); });
+                            L.DomEvent.on(next, 'click', L.DomEvent.stop)
+                                     .on(next, 'click', function(){ stepYear(1); });
+                            updateYearButtons();
+                            return container;
+                        }
+                    });
+                    new YearControl().addTo(map);
 
                     // Swap overlays at higher zoom for sharper detail
                     const SWAP_ZOOM = 0.75; // threshold when global hi-res kicks in
