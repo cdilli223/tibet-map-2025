@@ -52,16 +52,44 @@
         }
 
         /* Year navigation control styling */
+        .year-control { display: inline-flex; flex-direction: column; align-items: stretch; background: rgba(255, 250, 235, 0.95); border: 1px solid #f3d0a6; border-radius: 6px; box-shadow: 0 2px 6px rgba(0,0,0,0.12); padding: 2px 8px; }
+        .year-row { display: flex; align-items: center; justify-content: center; gap: 6px; height: 26px; }
         .year-control a.year-btn {
-            font-size: 16px;
-            width: 34px;
-            height: 34px;
-            line-height: 34px;
+            font-size: 13px;
+            width: 28px;
+            height: 26px;
+            line-height: 26px;
             text-align: center;
             background: #fef3c7; /* amber-100 */
             color: #111827;
+            display: flex; align-items: center; justify-content: center;
         }
         .year-control a.year-btn.disabled { opacity: 0.4; pointer-events: none; }
+        /* Year display control styling */
+        .year-display { padding: 0 12px; background: #fff7ed; color: #1f2937; font-weight: 700; min-width: 90px; text-align: center; height: 20px; display:flex; align-items:center; justify-content:center; border-left: 1px solid #f3d0a6; border-right: 1px solid #f3d0a6; font-size: 13px; }
+        /* Tibetan year label below the slider */
+        .year-tibetan {
+            width: 100%;
+            text-align: center;
+            font-weight: 600;
+            color: #0f172a;
+            height: 20px; /* match slider/button height */
+            line-height: 20px; /* vertically center text */
+            font-size: 13px; /* match year-display font size */
+            background: rgba(255, 250, 235, 0.95); /* match control bg */
+            border-top: 1px solid #f3d0a6; /* subtle separation from slider row */
+            border-radius: 0 0 6px 6px; /* rounded bottom corners to match control */
+        }
+
+        /* Corner padding for Leaflet control containers (adjust as needed) */
+        .leaflet-top.leaflet-left { padding-top: 20px; padding-left: 16px; }
+        .leaflet-top.leaflet-right { padding-top: 20px; padding-right: 16px; }
+        .leaflet-bottom.leaflet-left { padding-bottom: 20px; padding-left: 16px; }
+        .leaflet-bottom.leaflet-right { padding-bottom: 20px; padding-right: 16px; }
+
+        /* Fine-grained margins on specific controls */
+        .home-control { margin: 0 6px; }
+        .year-control { margin: 0 6px; }
 
         /* Keep Leaflet controls above custom image layer */
         .leaflet-top, .leaflet-bottom { z-index: 500 !important; }
@@ -260,6 +288,17 @@
                         interactive: false,
                         zIndex: 200
                     }).addTo(map);
+                    // Track home image info for year navigation
+                    const homeInfo = (function(){
+                        const m = IMAGE_URL.split('/').pop().match(/^(.+?)_(\d{3,4})\.(jpg|jpeg|png|webp)$/i);
+                        if (m) return { base: m[1], year: parseInt(m[2],10), ext: m[3].toLowerCase() };
+                        const m2 = IMAGE_URL.split('/').pop().match(/^(.+?)\.(jpg|jpeg|png|webp)$/i);
+                        if (m2) return { base: m2[1], year: null, ext: m2[2].toLowerCase() };
+                        return { base: 'tibet', year: null, ext: 'jpg' };
+                    })();
+                    let currentHomeBase = homeInfo.base;
+                    let currentHomeYear = homeInfo.year; // e.g., 2020
+                    let currentHomeExt = homeInfo.ext || 'jpg';
 
                     // Optional hi-res overlay preloaded and swapped in on zoom
                     let hiresOverlay = null;
@@ -305,15 +344,49 @@
                     let currentPoiScale = 1.0;
                     let poiActive = false;
                     let yearPrevBtn = null, yearNextBtn = null;
+                    let yearDisplayEl = null;
+                    let yearTibetanEl = null;
+                    const TIBETAN_YEAR_NAMES = {
+                        // Provide your mapping here, e.g. 1984: '༡༩༨༤ ལོ་',
+                        // Placeholder examples:
+                        1984: 'Wood Mouse',
+                        1990: 'Iron Horse',
+                        1995: 'Wood Pig',
+                        1996: 'Fire Mouse',
+                        1997: 'Fire Ox',
+                        1998: 'Earth Tiger',
+                        1999: 'Earth Rabbit',
+                        2000: 'Iron Dragon',
+                        2001: 'Iron Snake',
+                        2002: 'Water Horse',
+                        2010: 'Iron Tiger',
+                        2020: 'Iron Mouse'
+                    };
 
                     function updateYearButtons() {
                         if (!yearPrevBtn || !yearNextBtn) return;
-                        if (poiActive && currentPoiBase) {
+                        // Enable year buttons if either POI is active or home image has a year
+                        const enable = (poiActive && currentPoiBase) || (currentHomeBase && (currentHomeYear != null || YEAR_CANDIDATES.length));
+                        if (enable) {
                             yearPrevBtn.classList.remove('disabled');
                             yearNextBtn.classList.remove('disabled');
                         } else {
                             yearPrevBtn.classList.add('disabled');
                             yearNextBtn.classList.add('disabled');
+                        }
+                    }
+
+                    function setYearDisplay() {
+                        if (!yearDisplayEl) return;
+                        if (poiActive && currentPoiBase) {
+                            yearDisplayEl.textContent = (currentPoiYear != null) ? String(currentPoiYear) : '—';
+                        } else {
+                            yearDisplayEl.textContent = (currentHomeYear != null) ? String(currentHomeYear) : '—';
+                        }
+                        // Tibetan label below
+                        if (yearTibetanEl) {
+                            const y = poiActive && currentPoiBase ? currentPoiYear : currentHomeYear;
+                            yearTibetanEl.textContent = (y != null && TIBETAN_YEAR_NAMES[y]) ? TIBETAN_YEAR_NAMES[y] : '—';
                         }
                     }
 
@@ -382,6 +455,7 @@
                         const url = `images/${currentPoiBase}_${targetYear}.${currentPoiExt || 'jpg'}`;
                         crossfadePoiToUrl(url);
                         currentPoiYear = targetYear;
+                        setYearDisplay();
                     }
 
                     // Store map reference for resize handler
@@ -463,6 +537,7 @@
                                     requestAnimationFrame(fadeIn);
                                     poiActive = true;
                                     updateYearButtons();
+                                    setYearDisplay();
                                 };
                                 loader.onerror = function() {
                                     console.error('POI image failed to load:', p.image);
@@ -492,6 +567,7 @@
                         currentPoiBase = null;
                         currentPoiYear = null;
                         updateYearButtons();
+                        setYearDisplay();
 
                         // Attach lift-off class to map for marker animation
                         const mapContainer = document.getElementById(MAP_ID);
@@ -569,7 +645,7 @@
                     }
 
                     const HomeControl = L.Control.extend({
-                        options: { position: 'topleft' },
+                        options: { position: 'bottomleft' },
                         onAdd: function() {
                             const container = L.DomUtil.create('div', 'leaflet-bar home-control');
                             const btn = L.DomUtil.create('a', 'home-btn', container);
@@ -585,42 +661,91 @@
 
                     // Year navigation control (Prev/Next)
                     function stepYear(direction) {
-                        if (!poiActive || !currentPoiBase || currentPoiYear == null) return;
-                        const nextY = direction > 0 ? findNextYear(currentPoiYear) : findPrevYear(currentPoiYear);
-                        if (nextY && nextY !== currentPoiYear) {
-                            // Attempt to load next; if it fails, try further in the same direction
-                            const candidates = direction > 0 ? YEAR_CANDIDATES.filter(y => y > currentPoiYear) : YEAR_CANDIDATES.filter(y => y < currentPoiYear).reverse();
-                            (function tryNext(i){
-                                if (i >= candidates.length) return;
-                                const y = candidates[i];
+                        // If a POI image is active, step that
+                        if (poiActive && currentPoiBase) {
+                            const currY = currentPoiYear;
+                            const candidatesPoi = (function(){
+                                if (currY == null) {
+                                    return direction > 0 ? YEAR_CANDIDATES.slice(0) : YEAR_CANDIDATES.slice(0).reverse();
+                                }
+                                return direction > 0 ? YEAR_CANDIDATES.filter(y => y > currY) : YEAR_CANDIDATES.filter(y => y < currY).reverse();
+                            })();
+                            (function tryNextPoi(i){
+                                if (i >= candidatesPoi.length) return;
+                                const y = candidatesPoi[i];
                                 const testUrl = `images/${currentPoiBase}_${y}.${currentPoiExt || 'jpg'}`;
                                 const test = new Image();
                                 test.onload = function(){ goToYear(y); };
-                                test.onerror = function(){ tryNext(i+1); };
+                                test.onerror = function(){ tryNextPoi(i+1); };
                                 test.src = testUrl;
                             })(0);
+                            return;
                         }
+
+                        // Otherwise, step the home image overlay
+                        if (!currentHomeBase) return;
+                        const curr = currentHomeYear;
+                        const candidatesHome = (function(){
+                            if (curr == null) {
+                                // If no current year, try full list in direction
+                                return direction > 0 ? YEAR_CANDIDATES.slice(0) : YEAR_CANDIDATES.slice(0).reverse();
+                            }
+                            return direction > 0 ? YEAR_CANDIDATES.filter(y => y > curr) : YEAR_CANDIDATES.filter(y => y < curr).reverse();
+                        })();
+                        (function tryNextHome(i){
+                            if (i >= candidatesHome.length) return;
+                            const y = candidatesHome[i];
+                            const testUrl = `images/${currentHomeBase}_${y}.${currentHomeExt || 'jpg'}`;
+                            const test = new Image();
+                            test.onload = function(){
+                                // Crossfade baseOverlay to new URL
+                                const ghost = L.imageOverlay(baseOverlay._url, baseOverlay.getBounds(), { opacity: baseOverlay.options.opacity || 0.98, zIndex: (baseOverlay.options.zIndex || 200) + 1 });
+                                ghost.addTo(map);
+                                baseOverlay.setUrl(testUrl);
+                                currentHomeYear = y;
+                                let prog = 0;
+                                const start = performance.now();
+                                function fade(ts){
+                                    prog = Math.min(1, (ts - start) / 400);
+                                    ghost.setOpacity(1 - prog);
+                                    if (prog < 1) requestAnimationFrame(fade); else map.removeLayer(ghost);
+                                }
+                                requestAnimationFrame(fade);
+                                updateYearButtons();
+                                setYearDisplay();
+                            };
+                            test.onerror = function(){ tryNextHome(i+1); };
+                            test.src = testUrl;
+                        })(0);
                     }
 
                     const YearControl = L.Control.extend({
                         options: { position: 'topleft' },
                         onAdd: function() {
                             const container = L.DomUtil.create('div', 'leaflet-bar year-control');
-                            const prev = L.DomUtil.create('a', 'year-btn', container);
+                            const row = L.DomUtil.create('div', 'year-row', container);
+                            const prev = L.DomUtil.create('a', 'year-btn', row);
                             prev.href = '#';
                             prev.title = 'Previous year';
                             prev.innerHTML = '‹';
-                            const next = L.DomUtil.create('a', 'year-btn', container);
+                            const display = L.DomUtil.create('div', 'year-display', row);
+                            display.innerHTML = '&nbsp;';
+                            const next = L.DomUtil.create('a', 'year-btn', row);
                             next.href = '#';
                             next.title = 'Next year';
                             next.innerHTML = '›';
+                            const tib = L.DomUtil.create('div', 'year-tibetan', container);
+                            tib.textContent = '—';
                             yearPrevBtn = prev;
                             yearNextBtn = next;
+                            yearDisplayEl = display;
+                            yearTibetanEl = tib;
                             L.DomEvent.on(prev, 'click', L.DomEvent.stop)
                                      .on(prev, 'click', function(){ stepYear(-1); });
                             L.DomEvent.on(next, 'click', L.DomEvent.stop)
                                      .on(next, 'click', function(){ stepYear(1); });
                             updateYearButtons();
+                            setYearDisplay();
                             return container;
                         }
                     });
