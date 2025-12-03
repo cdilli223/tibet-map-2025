@@ -8,15 +8,49 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         #map {
-            height: 100vh;
-            max-height: calc(100vh - 4rem);
+            height: 80vh; /* slightly shorter to avoid overflow */
+            max-height: calc(100vh - 8rem);
             z-index: 0;
+            position: relative; /* allow absolutely positioned overlay inside */
             border-radius: 0.75rem;
-            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.25), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+            background: #0f1b3d; /* subtle dark background around image */
         }
+        .map-frame {
+            border-radius: 0.75rem;
+            overflow: hidden; /* ensure rounded corners clip overlay */
+        }
+        /* High-contrast, always-visible POI marker */
+        .leaflet-div-icon.poi-marker {
+            width: 16px !important;
+            height: 16px !important;
+            border-radius: 9999px !important;
+            background-color: #ffca39 !important; /* fill color */
+            border: 2px solid #efdf66 !important; /* outline color */
+            box-shadow: 0 2px 6px rgba(0,0,0,0.9) !important;
+        }
+        .leaflet-div-icon.poi-marker:hover {
+            background-color: #eb91ff !important;
+        }
+
+        /* Optional: style tweak for the Home control button */
+        .home-control a.home-btn {
+            font-size: 18px;
+            width: 34px;
+            height: 34px;
+            line-height: 34px;
+            text-align: center;
+            background: #a7d7fc;
+            color: #111827;
+        }
+
+        /* Keep Leaflet controls above custom image layer */
+        .leaflet-top, .leaflet-bottom { z-index: 500 !important; }
+        /* Ensure popups/tooltips render above image */
+        .leaflet-popup-pane, .leaflet-tooltip-pane { z-index: 600 !important; }
     </style>
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
-        integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin=""/>
+    <!-- Leaflet CSS (without SRI to avoid preview/CDN quirks) -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous"/>
     <script>
         tailwind.config = {
             theme: {
@@ -31,55 +65,341 @@
 </head>
 <body class="bg-[#0a1833] font-sans p-4 sm:p-6">
     <header class="text-center mb-6">
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Ecopolitical Facts of Tibet</h1>
-        <p class="text-lg text-gray-200 mt-2">Sponsored by Google Earth</p>
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-blue-800">Historical Hydrology of Tibet</h1>
+        <p class="text-lg text-gray-200 mt-2">Images Sourced from Google Earth</p>
     </header>
-    <div id="map" class="w-full"></div>
+    <div class="map-frame">
+        <div id="map" class="w-full">
+            <!-- Static full-size POI image layer (not tied to Leaflet zoom) -->
+            <div id="poi-image-layer" style="position:absolute; inset:0; pointer-events:none; z-index:300;">
+                <img id="poi-image" alt="POI Image" style="width:100%; height:100%; object-fit:contain; opacity:0; transition:opacity 600ms ease;" />
+                            // Fine-tuned frame bounds to better center on POI
+                            overlayBounds: [[220,2060],[400,2260]],
+                            preferPointCenter: true, // fall back to point-centered zoom if bounds feel awkward
+        </div>
+    </div>
+    <!-- Optional: Debug preview (commented out for production look) -->
+    <!--
+    <div class="mt-4 text-center">
+        <p class="text-gray-300 text-sm">Debug preview of image path:</p>
+        <img src="images/Tibet-Current.jpg" alt="Debug Tibet Image" class="inline-block max-w-full h-auto rounded"/>
+    </div>
+    -->
     <footer class="text-center mt-4 text-gray-300 text-sm">
         Data provided by custom image overlay | Example: Tibet-Current.jpg
-    </footer>
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
-        integrity="sha256-20n6a9OcT5S+-pQj6YSo8+nv+q1bncI+8wF3S7xYI=" crossorigin=""></script>
+                // Refined frame bounds closer to the right-side area
+                overlayBounds: [[240,2120],[380,2280]],
+                preferPointCenter: false,
     <script>
-        // Custom image map constants
-        const IMAGE_URL = 'images/Tibet-Current.jpg'; // Update with your image path
-        const IMAGE_WIDTH = 2000; // px (set to your image's width)
-        const IMAGE_HEIGHT = 1500; // px (set to your image's height)
+        // Image map config (auto-detects size; falls back if needed)
+        const IMAGE_URL = 'images/tibet_2020.jpg';
+        // Optional global hi-res image (same aspect ratio)
+        // const HIRES_IMAGE_URL = 'images/Tibet-Current-2x.jpg';
+        // Optional region-specific hi-res patches: pixel bounds and image URLs
+        // Define regions in image pixel coordinates: [[y1, x1], [y2, x2]]
+        // Example shape shown below; keep as [] if unused
+        const REGION_HIRES = [];
+        const FALLBACK_WIDTH = 2900;
+        const FALLBACK_HEIGHT = 1500;
         const MAP_ID = 'map';
+        // Example points of interest: pixel coords with optional zoom image and info
+        const POIS = [
+            {
+                name: 'Himalaya Mountains',
+                xy: [170, 1100],
+                overlayBounds: [[140,1060],[200,1140]], // cropped region for detail overlay
+                image: 'images/himalaya_1984.jpg',
+                info: 'Himalayan range overview.'
+            },
+            {
+                name: 'Central Tibetan Lakes',
+                xy: [620, 1325],
+                overlayBounds: [[580,1285],[660,1365]],
+                image: 'images/central_lakes_1984.jpg',
+                info: 'Central Tibetan lakes cluster.'
+            },
+            {
+                name: 'Arunachal Pradesh Border',
+                xy: [310, 2160],
+                overlayBounds: [[0,0],[340,2200]],
+                image: 'images/arunachal_1984.jpg',
+                info: 'Eastern border area detail.'
+            },
+            {
+                name: 'Kanbula',
+                xy: [1020, 2600],
+                overlayBounds: [[980,2560],[1060,2640]],
+                image: 'images/kanbula_1984.jpg',
+                info: 'Kanbula region detail.'
+            }
+        ];
 
         window.onload = function() {
             try {
-                // Use Leaflet's simple CRS for pixel coordinates
-                const bounds = [[0,0], [IMAGE_HEIGHT, IMAGE_WIDTH]];
-                const map = L.map(MAP_ID, {
-                    crs: L.CRS.Simple,
-                    minZoom: -2,
-                    maxZoom: 2,
-                    zoomSnap: 0.25,
-                });
-                map.fitBounds(bounds);
+                const imgProbe = new Image();
+                imgProbe.onload = function() {
+                    const imgW = imgProbe.naturalWidth || FALLBACK_WIDTH;
+                    const imgH = imgProbe.naturalHeight || FALLBACK_HEIGHT;
+                    const bounds = [[0, 0], [imgH, imgW]];
 
-                // Add the image overlay
-                L.imageOverlay(IMAGE_URL, bounds).addTo(map);
+                    const map = L.map(MAP_ID, {
+                        crs: L.CRS.Simple,
+                        zoomSnap: 0.0,
+                        zoomDelta: 0.5,
+                        wheelPxPerZoomLevel: 120,
+                        zoomControl: false,          // hide +/- controls
+                        scrollWheelZoom: false,      // disable manual zoom
+                        doubleClickZoom: false,
+                        touchZoom: false,
+                        boxZoom: false,
+                        keyboard: false,
+                        attributionControl: false,
+                        minZoom: -1.1, // allow zooming out to see full image
+                        maxZoom: 1.5   // cap zoom-in to prevent pixelation blowout
+                    });
 
-                // Example marker (at pixel coordinates)
-                const marker = L.marker([IMAGE_HEIGHT/2, IMAGE_WIDTH/2], {
-                    draggable: true
-                }).addTo(map);
-                marker.bindPopup("<b>Custom Map!</b><br>This marker is centered on the image.").openPopup();
+                    // Fit and constrain to image bounds
+                    // Fit image with gentle padding and limit panning beyond edges
+                    map.fitBounds(bounds, { padding: [40, 40] });
+                    map.setMaxBounds(L.latLngBounds(bounds).pad(0.05));
 
-                // Handle map click events (show pixel coordinates)
-                map.on('click', function(e) {
-                    const y = e.latlng.lat.toFixed(0);
-                    const x = e.latlng.lng.toFixed(0);
-                    L.popup()
-                        .setLatLng(e.latlng)
-                        .setContent(`<div class='font-bold'>Image Clicked!</div><small>X: ${x}, Y: ${y}</small>`)
-                        .openOn(map);
-                });
+                    // Base overlay
+                    let baseOverlay = L.imageOverlay(IMAGE_URL, bounds, {
+                        className: 'rounded-lg shadow-xl',
+                        opacity: 0.98,
+                        interactive: false,
+                        zIndex: 200
+                    }).addTo(map);
+
+                    // Optional hi-res overlay preloaded and swapped in on zoom
+                    let hiresOverlay = null;
+                    if (typeof HIRES_IMAGE_URL !== 'undefined' && HIRES_IMAGE_URL) {
+                        const hiImg = new Image();
+                        hiImg.onload = function() {
+                            hiresOverlay = L.imageOverlay(HIRES_IMAGE_URL, bounds, {
+                                className: 'rounded-lg shadow-xl',
+                                opacity: 0.98,
+                                interactive: false,
+                                zIndex: 200
+                            });
+                        };
+                        hiImg.src = HIRES_IMAGE_URL;
+                    }
+
+                    // Region-specific overlays (preload all; add when viewport intersects)
+                    const regionOverlays = [];
+                    if (Array.isArray(REGION_HIRES)) {
+                        REGION_HIRES.forEach(r => {
+                            const ri = new Image();
+                            ri.onload = function() {
+                                const ro = L.imageOverlay(r.url, r.bounds, {
+                                    className: 'rounded-lg shadow-xl',
+                                    opacity: 0.98
+                                });
+                                regionOverlays.push({ name: r.name, bounds: L.latLngBounds(r.bounds), overlay: ro, active: false });
+                            };
+                            ri.src = r.url;
+                        });
+                    }
+
+                    // Track fade state for base overlay and DOM POI image
+                    let poiOverlayTimer = null;
+                    let cancelFade = false; // set true to abort in-progress fades
+                    const poiImgEl = document.getElementById('poi-image');
+                    const poiImgLayer = document.getElementById('poi-image-layer');
+
+                    // Store map reference for resize handler
+                    const mapDivRef = document.getElementById(MAP_ID);
+                    if (mapDivRef) {
+                        mapDivRef._leaflet_map = map;
+                    }
+
+                    // Ensure proper render after layout
+                    setTimeout(() => map.invalidateSize(), 0);
+
+                    // Minimal click popup with pixel coords (optional)
+                    map.on('click', function(e) {
+                        const y = e.latlng.lat.toFixed(0);
+                        const x = e.latlng.lng.toFixed(0);
+                        L.popup()
+                            .setLatLng(e.latlng)
+                            .setContent(`<small>Pixel X: ${x}, Y: ${y}</small>`)
+                            .openOn(map);
+                    });
+
+                    // Add markers and behavior to zoom and show info/alt image
+                    const markerLayer = L.layerGroup().addTo(map);
+                    const initialZoom = map.getZoom();
+                    const fadeDuration = 600; // ms (keep in sync with fly duration)
+                    const initialCenter = [imgH/2, imgW/2];
+                    POIS.forEach(p => {
+                        const icon = L.divIcon({
+                            className: 'leaflet-div-icon poi-marker',
+                            iconSize: [16,16],
+                            iconAnchor: [8,8]
+                        });
+                        const m = L.marker(p.xy, { icon, riseOnHover: true }).addTo(markerLayer);
+                        m.bindTooltip(p.name, {permanent: false});
+                        m.on('click', () => {
+                            // Zoom the map to frame the POI area, then crossfade to a static full-size image
+                            const flyDuration = 0.6; // seconds (sync with fadeDuration)
+                            const hasBounds = Array.isArray(p.overlayBounds) && p.overlayBounds.length === 2;
+                            if (hasBounds && !p.preferPointCenter) {
+                                map.flyToBounds(p.overlayBounds, { animate: true, duration: flyDuration, padding: [24, 24] });
+                                // After bounds fly, nudge center to exact POI point to avoid lateral drift
+                                const afterBoundsCenter = () => {
+                                    map.off('moveend', afterBoundsCenter);
+                                    map.panTo(p.xy, { animate: true, duration: 0.3 });
+                                };
+                                map.on('moveend', afterBoundsCenter);
+                            } else {
+                                const preZoom = map.getZoom();
+                                const approachZoom = Math.min(preZoom + 1.1, map.getMaxZoom());
+                                map.flyTo(p.xy, approachZoom, { animate: true, duration: flyDuration });
+                            }
+
+                            // Crossfade from base map to static full-size POI image (DOM overlay), no zoom on image
+                            if (p.image && poiImgEl) {
+                                const loader = new Image();
+                                loader.onload = function() {
+                                    poiImgEl.src = p.image;
+                                    // synchronize fade to after map finishes moving
+                                    let started = false;
+                                    const startFade = () => {
+                                        if (started) return; started = true;
+                                        cancelFade = false;
+                                        const start = performance.now();
+                                        function fadeIn(ts) {
+                                            let prog = (ts - start) / fadeDuration;
+                                            if (prog > 1) prog = 1;
+                                            if (cancelFade) prog = 1;
+                                            baseOverlay.setOpacity(0.98 * (1 - prog));
+                                            poiImgEl.style.opacity = String(prog);
+                                            if (!cancelFade && prog < 1) {
+                                                requestAnimationFrame(fadeIn);
+                                            }
+                                        }
+                                        requestAnimationFrame(fadeIn);
+                                    };
+                                    const onMoveEnd = () => { map.off('moveend', onMoveEnd); startFade(); };
+                                    map.on('moveend', onMoveEnd);
+                                };
+                                loader.onerror = function() {
+                                    console.error('POI image failed to load:', p.image);
+                                    L.popup()
+                                        .setLatLng(p.xy)
+                                        .setContent(`<div class='text-sm text-red-600'>Image not found: ${p.image}</div>`)
+                                        .openOn(map);
+                                };
+                                loader.src = p.image;
+                            }
+
+                            // Show info popup
+                            L.popup()
+                                .setLatLng(p.xy)
+                                .setContent(`<div class='text-sm'><div class='font-semibold mb-1'>${p.name}</div><div>${p.info || ''}</div></div>`)
+                                .openOn(map);
+                        });
+                    });
+
+                    // Home button control to restore full view and overlays
+                    function goHome() {
+                        // Abort any active fades & timers, restore base overlay
+                        cancelFade = true;
+                        if (poiOverlayTimer) {
+                            clearTimeout(poiOverlayTimer);
+                            poiOverlayTimer = null;
+                        }
+                        // Hide static POI image (DOM overlay)
+                        if (poiImgEl) {
+                            poiImgEl.style.opacity = '0';
+                            // optional: clear src after fade-out
+                            // setTimeout(() => { poiImgEl.src = ''; }, 300);
+                        }
+                        // Ensure base overlay is visible
+                        if (!map.hasLayer(baseOverlay)) {
+                            baseOverlay.addTo(map);
+                        }
+                        baseOverlay.setOpacity(0.98);
+                        // Reset overlays to base
+                        if (hiresOverlay && map.hasLayer(hiresOverlay)) {
+                            map.removeLayer(hiresOverlay);
+                        }
+                        if (!map.hasLayer(baseOverlay)) {
+                            baseOverlay.addTo(map);
+                        }
+                        regionOverlays.forEach(r => {
+                            if (r.active) {
+                                map.removeLayer(r.overlay);
+                                r.active = false;
+                            }
+                        });
+                        // ensure any image overlays are cleared (legacy path)
+                        // currentPoiOverlay removed earlier; keep null
+                        map.closePopup();
+                        // Reset view to full framing of the base image
+                        map.fitBounds(bounds, { padding: [40, 40] });
+                        baseOverlay.setOpacity(0.98);
+                    }
+
+                    const HomeControl = L.Control.extend({
+                        options: { position: 'topleft' },
+                        onAdd: function() {
+                            const container = L.DomUtil.create('div', 'leaflet-bar home-control');
+                            const btn = L.DomUtil.create('a', 'home-btn', container);
+                            btn.href = '#';
+                            btn.title = 'Reset view';
+                            btn.innerHTML = 'ཡུལ';
+                            L.DomEvent.on(btn, 'click', L.DomEvent.stop)
+                                     .on(btn, 'click', function() { goHome(); });
+                            return container;
+                        }
+                    });
+                    new HomeControl().addTo(map);
+
+                    // Swap overlays at higher zoom for sharper detail
+                    const SWAP_ZOOM = 0.75; // threshold when global hi-res kicks in
+                    let usingHires = false;
+                    map.on('zoomend', function() {
+                        const z = map.getZoom();
+                        if (hiresOverlay) {
+                            if (z >= SWAP_ZOOM && !usingHires) {
+                                map.removeLayer(baseOverlay);
+                                hiresOverlay.addTo(map);
+                                usingHires = true;
+                            } else if (z < SWAP_ZOOM && usingHires) {
+                                map.removeLayer(hiresOverlay);
+                                baseOverlay.addTo(map);
+                                usingHires = false;
+                            }
+                        }
+
+                        // Region overlays: activate when zoomed in and viewport intersects region
+                        const VIEW_ZOOM = 0.9; // only show patches when quite zoomed in
+                        const viewBounds = map.getBounds();
+                        regionOverlays.forEach(r => {
+                            const intersects = viewBounds.intersects(r.bounds);
+                            if (z >= VIEW_ZOOM && intersects && !r.active) {
+                                r.overlay.addTo(map);
+                                r.active = true;
+                            } else if ((z < VIEW_ZOOM || !intersects) && r.active) {
+                                map.removeLayer(r.overlay);
+                                r.active = false;
+                            }
+                        });
+                    });
+                };
+                imgProbe.onerror = function() {
+                    console.error('Image failed to load at', IMAGE_URL);
+                    const mapDiv = document.getElementById(MAP_ID);
+                    if (mapDiv) {
+                        mapDiv.innerHTML = '<div class="p-6 bg-red-100 text-red-700 text-center rounded-lg">Image not found: ' + IMAGE_URL + '</div>';
+                    }
+                };
+                imgProbe.src = IMAGE_URL;
 
             } catch (error) {
-                console.error("Failed to initialize Leaflet image map:", error);
+                console.error('Failed to initialize Leaflet image map:', error);
                 const mapDiv = document.getElementById(MAP_ID);
                 if (mapDiv) {
                     mapDiv.innerHTML = '<div class="p-6 bg-red-100 text-red-700 text-center rounded-lg">Error loading map. Check console for details.</div>';
