@@ -36,6 +36,8 @@
             background: url("images/Avalokitesvara.jpg") no-repeat;
             background-size: cover;
             background-position: center calc(50% - 280px);
+            opacity: 0;
+            transition: opacity 1.2s ease;  
         }
 
         /* Scrolling melt layer */
@@ -64,6 +66,14 @@
                 var(--paper) 90%,
                 var(--paper) 100%
             );
+        }
+
+        body.bg-visible::before {
+            opacity: 1;
+        }
+
+        #hero, #site-title, #map-frame {
+            will-change: opacity, transform;
         }
 
         main, section, header, .container, .content, #app {
@@ -205,7 +215,7 @@
             border-radius: var(--poi-radius);
             overflow: hidden;
 
-            background: rgba(15, 23, 42, 0);          /* so corners are visible */
+            background: #0b0f1900;          /* so corners are visible */
             border: 0px solid rgba(248, 250, 252, 0.1);
             box-shadow: 0 18px 20px rgba(15, 23, 42, 0.6);
         }
@@ -219,8 +229,9 @@
             border-radius: 0;
             box-shadow: none;
             opacity: 0;
-            transition: opacity 800ms ease;
+            transition: opacity 800ms linear;
             pointer-events: none;
+            will-change: opacity;
         }
 
         #poi-caption-panel {
@@ -307,28 +318,20 @@
             font-weight: 600;
         }
 
-        .base-map-img {
-            transition: filter 400ms ease, opacity 300ms ease;
+        .leaflet-image-layer.base-map-img {
+            transition: filter 400ms ease !important;
             will-change: filter, opacity;
         }
 
-        /* "POI mode" look: dim + blur + warm tone (tweak to taste) */
         .base-map-img.poi-mode {
-            /* filter: blur(2px) saturate(0.85) brightness(0.85) contrast(1.05) sepia(0.25); */
             filter: blur(5px) saturate(0.7) brightness(0.45) hue-rotate(270deg);
-            /* filter: blur(2px) grayscale(0.6) brightness(0.8); */
-            /* alternatives:
-            - grayscale(0.5)
-            - hue-rotate(20deg)
-            - brightness(0.75)
-            */
         }
 
         /* Minimal style for Home control to match Leaflet bar */
         .home-control a {
             display: block;
-            background: rgba(15, 23, 42, 0.9);
-            color: #89a5dc;
+            background: #FEFCE8;
+            color: rgba(93, 1, 34, 0.9);
             padding: 0px 0px;
             text-decoration: none;
             border-radius: 4px;
@@ -336,7 +339,13 @@
             font-size: 16px;
             line-height: 1;
         }
-        .home-control a:hover { background: rgba(14, 53, 108, 0.98); }
+        .home-control a:hover { background: rgba(138, 7, 15, 0.98); }
+
+        .btn-year-nav.is-active {
+            background: rgba(14, 53, 108, 0.98);
+            box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.7), 0 2px 8px rgba(15, 23, 42, 0.8);
+            border-color: rgba(253, 230, 138, 0.85);
+        }
     </style>
 </head>
 
@@ -377,18 +386,20 @@
                                         <div
                                             class="inline-flex items-center gap-1 bg-yellow-50/95 border border-yellow-900/60 rounded-full px-2.5 py-1.5 shadow-md shadow-slate-900/40">
                                             <button id="year-prev" class="btn-year-nav">‹</button>
-                                
+                                            
+                                            <button id="autoplay-toggle" class="btn-year-nav" title="Play/Pause">▶</button>
+                                            <button id="autoplay-speed" class="btn-year-nav" title="Speed">1x</button>
+
                                             <!-- fixed width block -->
                                             <div class="flex flex-col items-center mx-1 w-[5.5rem]">
                                                 <span id="year-label" class="year-badge text-sm md:text-base block w-full text-center">
-                                                    2020
+                                                    1984
                                                 </span>
                                                 <span id="year-tibetan-label"
                                                     class="year-badge-label text-[0.55rem] md:text-[0.6rem] text-yellow-800 block w-full text-center">
-                                                    IRON MOUSE
+                                                    WOOD MOUSE
                                                 </span>
                                             </div>
-                                
                                             <button id="year-next" class="btn-year-nav">›</button>
                                         </div>
                                     </div>
@@ -475,13 +486,23 @@
 
         // Home/default year sequence
         const YEARS = [1984, 1990, 2000, 2010, 2020];
-        // Full set available for Kanbula
+        // Full set available for Lijiaxia Hydroelectric Dam
         const YEARS_ALL = [1984, 1990, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2010, 2020];
+
+        const YEARS_ZHANANG = [
+                1984,
+                1990,
+                ...Array.from({ length: 2020 - 1990 + 1 }, (_, i) => 1991 + i)
+            ];
 
         // Tibetan year names mapping (can be refined later)
         const TIBETAN_YEAR_NAMES = {
             1984: 'Wood Mouse',
             1990: 'Iron Horse',
+            1991: 'Iron Sheep',
+            1992: 'Iron Monkey',
+            1993: 'Water Bird',
+            1994: 'Wood Dog',
             1995: 'Wood Pig',
             1996: 'Fire Mouse',
             1997: 'Fire Ox',
@@ -490,7 +511,23 @@
             2000: 'Iron Dragon',
             2001: 'Iron Snake',
             2002: 'Water Horse',
+            2003: 'Water Sheep',
+            2004: 'Wood Monkey',
+            2005: 'Wood Bird',
+            2006: 'Fire Dog',
+            2007: 'Fire Pig',
+            2008: 'Earth Mouse',
+            2009: 'Earth Ox',
             2010: 'Iron Tiger',
+            2011: 'Iron Rabbit',
+            2012: 'Water Dragon',
+            2013: 'Water Snake',
+            2014: 'Wood Horse',
+            2015: 'Wood Sheep',
+            2016: 'Fire Monkey',
+            2017: 'Fire Bird',
+            2018: 'Earth Dog',
+            2019: 'Earth Pig',
             2020: 'Iron Mouse'
         };
 
@@ -515,32 +552,98 @@
                 name: 'Himalaya Mountains',
                 xy: [230, 1100],
                 image: 'images/himalaya_1984.jpg',
-                info: 'Overview of the high Himalayan range and the southern boundary of the plateau.'
+                infoByYear: {
+                    1984: 'Overview of the high Himalayan range forming the southern boundary of the Tibetan Plateau, with extensive snow and glacier coverage feeding major Asian river systems.',
+                    1990: 'By the early 1990s, satellite imagery begins to show subtle retreat of seasonal snowlines and thinning of some lower-elevation glaciers.',
+                    2000: 'Around 2000, glacier retreat becomes more discernible in several Himalayan sub-ranges, reflecting sustained regional warming trends.',
+                    2010: 'In the 2010s, accelerated glacial mass loss contributes to altered seasonal runoff patterns, increasing meltwater contribution during warmer months.',
+                    2020: 'By 2020, continued glacier retreat and reduced snow persistence are evident across much of the Himalaya, with implications for downstream water availability.'
+                }
             },
             {
                 name: 'Central Tibetan Lakes',
                 xy: [620, 1325],
                 image: 'images/central_lakes_1984.jpg',
-                info: 'Cluster of central plateau lakes. Shorelines are good indicators of long-term hydrological shifts.'
+                infoByYear: {
+                    1984: 'Cluster of central plateau lakes with relatively stable shorelines, reflecting long-standing closed-basin hydrological balance.',
+                    1990: 'In the 1990s, some lakes begin showing early signs of expansion as precipitation patterns and meltwater inputs subtly increase.',
+                    2000: 'By 2000, satellite records indicate noticeable growth in several central Tibetan lakes, suggesting a shift toward wetter conditions.',
+                    2010: 'During the 2010s, many lakes expand further and in some cases coalesce, reshaping local drainage and basin geometry.',
+                    2020: 'By 2020, central Tibetan lakes are among the most visibly expanded features on the plateau, reflecting multi-decadal climate-driven hydrological change.'
+                }
             },
             {
                 name: 'Arunachal Pradesh Border',
                 xy: [310, 2160],
                 image: 'images/arunachal_1984.jpg',
-                info: 'Eastern border zone highlighting drainage complexity between Tibet and Arunachal Pradesh.'
+                infoByYear: {
+                    1984: 'Eastern Himalayan border region characterized by complex drainage patterns where Tibetan Plateau waters transition toward the Brahmaputra basin.',
+                    1990: 'By the 1990s, subtle changes in river course geometry and floodplain moisture appear in satellite imagery, linked to monsoonal variability.',
+                    2000: 'Around 2000, increased seasonal runoff and shifting precipitation patterns influence river morphology near the plateau’s eastern edge.',
+                    2010: 'In the 2010s, intensified monsoon dynamics and upstream meltwater contribute to greater hydrological variability across the border region.',
+                    2020: 'By 2020, this region reflects the combined influence of climate variability, upstream glacier melt, and complex transboundary river dynamics.'
+                }
             },
             {
-                name: 'Kanbula',
+                name: 'Lijiaxia Hydroelectric Dam',
                 xy: [1020, 2600],
                 image: 'images/kanbula_1984.jpg',
-                info: 'Kanbula region, with river bends and reservoirs visible across years.'
+                infoByYear: {
+                    1984: 'Before dam construction, the Kanbula region exhibits natural river bends and seasonal flow variability shaped by snowmelt and rainfall.',
+                    1990: 'Early stages of hydropower planning and site preparation begin to influence river management in the Kanbula area.',
+                    1996: 'Construction of the Lijiaxia Hydroelectric Dam finishes in 1996. Filling of the reservoir begins shortly before the capture of this image on December 26, 1996.',
+                    2000: 'By 2000, the reservoir is clearly established, with regulated water levels altering downstream flow timing and sediment transport.',
+                    2010: 'In the 2010s, long-term hydrological regulation smooths seasonal discharge extremes and reshapes surrounding water bodies.',
+                    2020: 'By 2020, the river system in this region reflects decades of managed flow, contrasting sharply with pre-dam hydrological patterns.'
+                }
             },
             {
-                name: 'Yurba',
+                name: 'Yurba Co Region',
                 xy: [950, 1350],
                 image: 'images/yurba_1984.jpg',
-                info: 'Yurba lake region; pay attention to surface area and shoreline geometry across decades.'
+                infoByYear: {
+                    1984: 'Yurba lake region shows relatively small, discrete lake surfaces typical of central plateau conditions in the early Landsat era.',
+                    1990: 'During the 1990s, lake margins begin to expand slightly as regional precipitation and meltwater inputs increase.',
+                    2000: 'By 2000, Yurba and nearby lakes display more pronounced shoreline growth, indicating a sustained shift in basin water balance.',
+                    2010: 'In the 2010s, satellite observations reveal significant lake expansion and rising water levels across the region.',
+                    2020: 'By 2020, Yurba is part of a broader pattern of rapidly expanding Tibetan Plateau lakes driven by long-term climate change.'
+                }
+            },
+            {
+                name: 'Selin Co',
+                xy: [500, 1550],
+                image: 'images/selin_1984.jpg',
+                infoByYear: {
+                    1984: 'Selin Co, a large saltwater lake in the central Tibetan Plateau, shows a relatively stable shoreline and surrounding wetlands.',
+                    1990: 'In the 1990s, slight expansions in lake margins are observed, reflecting subtle changes in water balance.',
+                    2000: 'By 2000, Selin Co displays noticeable growth in lake area, indicating a trend toward wetter conditions.',
+                    2010: 'During the 2010s, accelerated lake expansion is evident, with rising water levels and altered wetland extent.',
+                    2020: 'By 2020, Selin Co is among the most visibly expanded lakes on the plateau, showcasing significant hydrological change.'
+                }
+            },
+            {
+                name: 'Braided Yarlung Tsanpo',
+                xy: [230, 1760],
+                image: 'images/braids_1984.jpg',
+                years: YEARS_ZHANANG,
+                autoplay: {
+                    enabled: true,
+                    loop: false,
+                    // time per frame, in ms
+                    dwellMs: 1600,
+                    // extra pause on key years for reading
+                    keyDwellMs: 3200,
+                    keyYears: [1984, 1990, 2000, 2010, 2020]
+                },
+                infoByYear: {
+                    1984: 'Broad braided channels of the Yarlung Tsangpo River near Zhanang reflect strong seasonal flow variability and high sediment transport.',
+                    1990: 'In the 1990s, channel patterns remain highly dynamic, with exposed gravel bars and shifting braid geometry.',
+                    2000: 'By 2000, subtle changes in braid width and bar exposure suggest evolving discharge and sediment regimes.',
+                    2010: 'During the 2010s, increased meltwater and precipitation variability influence channel stability and seasonal inundation.',
+                    2020: 'By 2020, the braided reach continues to express hydrological variability tied to upstream glacier melt and changing climate conditions.'
+                }
             }
+
         ];
 
         const TITLE_BADGE_URL = "images/Avalokitesvara.jpg";
@@ -554,7 +657,7 @@
         let imgW = FALLBACK_WIDTH;
         let imgH = FALLBACK_HEIGHT;
 
-        let currentYearIndex = YEARS.indexOf(2020);
+        let currentYearIndex = YEARS.indexOf(1984);
         if (currentYearIndex < 0) currentYearIndex = YEARS.length - 1;
 
         let CROPPED_BOUNDS = null;
@@ -566,8 +669,14 @@
         // const poiImage = document.getElementById("poi-image");
         const poiImageA = document.getElementById("poi-image-a");
         const poiImageB = document.getElementById("poi-image-b");
-        let poiFront = poiImageA;  // currently visible
-        let poiBack = poiImageB;
+        const poiImgs = [poiImageA, poiImageB];
+        let poiFrontIdx = 0;
+        function poiFront() { return poiImgs[poiFrontIdx]; }
+        function poiBack() { return poiImgs[1 - poiFrontIdx]; }
+        function normalizePoiStack() {
+            poiFront().style.opacity = "1";
+            poiBack().style.opacity = "0";
+        }
         const poiCaptionPanel = document.getElementById("poi-caption-panel");
         const poiCaptionTitle = document.getElementById("poi-caption-title");
         const poiCaptionText = document.getElementById("poi-caption-text");
@@ -578,10 +687,88 @@
         const yearNext = document.getElementById("year-next");
         const yearTibetan = document.getElementById("year-tibetan-label");
 
+        const autoplayToggle = document.getElementById("autoplay-toggle");
+        const autoplaySpeed = document.getElementById("autoplay-speed");
+
+        let currentPoi = null;
         let poiActive = false;
-        let currentPoiBase = null; // e.g., 'kanbula'
+        let currentPoiBase = null; // e.g., 'lijiaxia hydroelectric dam'
         let currentPoiYear = null; // number
         let currentPoiExt = 'jpg';
+
+        let autoplayTimer = null;
+        let autoplayRunning = false;
+        let autoplayTimer2 = null;
+        let autoplayRunning2 = false;
+
+        const SPEEDS = [3200, 2133, 1600, 1280, 800]; // ms per step (slow, normal, fast)
+        let speedIdx = 2;
+
+        function getBaseDwellMs() { return SPEEDS[speedIdx]; }
+
+        function setAutoplayButtonUI() {
+            if (autoplayToggle) autoplayToggle.textContent = autoplayRunning2 ? "❚❚" : "▶";
+            if (autoplaySpeed) autoplaySpeed.textContent = `${["0.5x","0.75x", "1x", "1.25x", "1.5x"][speedIdx]}`;
+        }
+
+        function stopAutoplayAll() {
+            autoplayRunning2 = false;
+            if (autoplayTimer2) {
+                clearTimeout(autoplayTimer2);
+                autoplayTimer2 = null;
+            }
+            // also stop POI-specific autoplay so you never have two clocks fighting
+            stopPoiAutoplay();
+            setAutoplayButtonUI();
+        }
+
+        function stepBaseYear(direction = 1) {
+            // base autoplay should not be running a POI overlay
+            poiActive = false;
+            currentYearIndex = (currentYearIndex + direction + YEARS.length) % YEARS.length;
+            updateYearLabel();
+
+            const y = YEARS[currentYearIndex];
+            if (map && baseFront && baseBack) {
+                crossfadeBaseImageToUrl(baseImageForYear(y));
+            } else {
+                loadBaseImageForYear(y);
+            }
+        }
+
+        function startGlobalAutoplay() {
+            stopAutoplayAll();
+            autoplayRunning2 = true;
+            setAutoplayButtonUI();
+
+            function tick() {
+                if (!autoplayRunning2) return;
+
+                // If a POI is active, autoplay that POI's year list.
+                if (poiActive && currentPoi && currentPoiBase) {
+                    const years = getPoiYearList();
+                    if (!years.length) { stopAutoplayAll(); return; }
+
+                    let idx = years.indexOf(currentPoiYear);
+                    if (idx < 0) idx = 0;
+                    idx = (idx + 1) % years.length;
+
+                    const nextYear = years[idx];
+                    stepPoiYear(1, nextYear);
+
+                    // If POI has its own dwell config, use it, otherwise base speed
+                    const dwell = currentPoi?.autoplay ? getDwellMsForYear(nextYear) : getBaseDwellMs();
+                    autoplayTimer2 = setTimeout(tick, dwell);
+                    return;
+                }
+
+                // Otherwise autoplay the base years
+                stepBaseYear(1);
+                autoplayTimer2 = setTimeout(tick, getBaseDwellMs());
+            }
+
+            autoplayTimer2 = setTimeout(tick, 350);
+        }
 
         function updateYearLabel() {
             // If a POI is active and has a known year, reflect that
@@ -590,6 +777,58 @@
             if (yearTibetan) {
                 yearTibetan.textContent = TIBETAN_YEAR_NAMES[y] || '—';
             }
+        }
+
+        function updatePoiCaptionForYear(year) {
+            if (!poiActive || !currentPoi) return;
+
+            const byYear = currentPoi.infoByYear || null;
+
+            let text = "";
+            if (byYear && year != null && typeof byYear[year] === "string" && byYear[year] !== "") {
+                text = byYear[year];
+            } else if (byYear && (byYear[year] === undefined || byYear[year] === "") && typeof byYear[1984] === "string") {
+                text = byYear[1984];
+            } else if (typeof currentPoi.info === "string") {
+                text = currentPoi.info;
+            }
+
+            poiCaptionTitle.textContent = currentPoi.name || "Region";
+            poiCaptionText.textContent = text;
+        }
+
+        function stopPoiAutoplay() {
+            autoplayRunning = false;
+            if (autoplayTimer) {
+                clearTimeout(autoplayTimer);
+                autoplayTimer = null;
+            }
+        }
+
+        function setAutoplayButtonUI() {
+            if (autoplayToggle) {
+                autoplayToggle.textContent = autoplayRunning2 ? "❚❚" : "▶";
+                autoplayToggle.classList.toggle("is-active", autoplayRunning2);
+            }
+            if (autoplaySpeed) autoplaySpeed.textContent = `${["0.5x", "0.75x", "1x", "1.25x", "1.5x"][speedIdx]}`;
+        }
+
+        function getPoiYearList() {
+            // Prefer POI-specific years when present
+            if (currentPoi && Array.isArray(currentPoi.years) && currentPoi.years.length) {
+                return currentPoi.years;
+            }
+            // Fall back to your old behavior
+            const base = (currentPoiBase || "").toLowerCase();
+            return (base === "kanbula") ? YEARS_ALL : YEARS;
+        }
+
+        function getDwellMsForYear(y) {
+            const cfg = currentPoi?.autoplay;
+            if (!cfg) return 1600;
+            const keyYears = cfg.keyYears || [];
+            const isKey = keyYears.includes(y);
+            return isKey ? (cfg.keyDwellMs ?? 3200) : (cfg.dwellMs ?? 1600);
         }
 
         function parseImageInfo(url) {
@@ -625,53 +864,100 @@
             }
         }
 
-        function fadeBaseOverlayTo(target, duration = 300) {
-            if (!baseOverlay) return;
-
-            const start = baseOverlay.options.opacity ?? BASE_OPACITY_HOME;
-            const startTime = performance.now();
-
-            function step(t) {
-                const p = Math.min(1, (t - startTime) / duration);
-                const v = start + (target - start) * p;
-                baseOverlay.setOpacity(v);
-                if (p < 1) requestAnimationFrame(step);
-            }
-            requestAnimationFrame(step);
-        }
-
         function crossfadePoiToUrl(newUrl) {
-            if (!poiFront || !poiBack || !newUrl) return;
+            if (!newUrl) return;
 
-            const loader = new Image();
-            loader.onload = () => {
-                // Copy the EXACT visual state (crop/position/transform) from front to back
-                applyPoiCrop(poiBack, loader.naturalHeight);
+            // latest-wins queue
+            if (crossfadePoiToUrl._busy) {
+                crossfadePoiToUrl._pending = newUrl;
+                return;
+            }
+            crossfadePoiToUrl._busy = true;
+            crossfadePoiToUrl._pending = null;
 
-                poiBack.style.transform = poiFront.style.transform || '';
-                poiBack.style.transformOrigin = poiFront.style.transformOrigin || '50% 50%';
+            const front = poiFront();
+            const back = poiBack();
 
-                // Prep back image under front
-                poiBack.src = newUrl;
-                poiBack.style.opacity = "0";
+            // Make stacking deterministic
+            front.style.zIndex = "2";
+            back.style.zIndex = "1";
 
-                poiBack.getBoundingClientRect();
+            // Preload OFFSCREEN first so we never fade to "not-yet-painted"
+            const pre = new Image();
+            pre.onload = async () => {
+                // apply crop based on real naturalHeight
+                applyPoiCrop(front, pre.naturalHeight);
+                applyPoiCrop(back, pre.naturalHeight);
 
-                // Simultaneous crossfade
+                // Assign the image to the back element
+                back.src = newUrl;
+
+                // Wait for decode if available (extra safety)
+                if (back.decode) {
+                    try { await back.decode(); } catch (e) { }
+                }
+
+                // Disable transitions temporarily to set initial state without animating
+                front.style.transition = "none";
+                back.style.transition = "none";
+
+                // Force a paint to ensure back image is loaded and rendered
                 requestAnimationFrame(() => {
-                    poiBack.style.opacity = "1";
-                    poiFront.style.opacity = "0";
-                });
+                    requestAnimationFrame(() => {
+                        // Set back to fully opaque BEFORE enabling transitions
+                        back.style.opacity = "1";
+                        front.style.opacity = "1";
 
-                // Swap roles after fade completes
-                setTimeout(() => {
-                    const tmp = poiFront;
-                    poiFront = poiBack;
-                    poiBack = tmp;
-                }, 270);
+                        // Force paint with opaque back visible
+                        back.offsetHeight;
+
+                        // NOW enable transitions and start the fade
+                        front.style.transition = "opacity 800ms linear";
+                        back.style.transition = "opacity 800ms linear";
+
+                        // Trigger the animation in the next frame
+                        requestAnimationFrame(() => {
+                            // Fade front out while back stays opaque
+                            front.style.opacity = "0";
+                        });
+
+                        // Swap after the fade duration
+                        setTimeout(() => {
+                            // Disable transitions for the swap
+                            front.style.transition = "none";
+                            back.style.transition = "none";
+
+                            poiFrontIdx = 1 - poiFrontIdx;
+
+                            // Normalize for next time
+                            poiFront().style.opacity = "1";
+                            poiBack().style.opacity = "0";
+                            poiFront().style.zIndex = "2";
+                            poiBack().style.zIndex = "1";
+
+                            crossfadePoiToUrl._busy = false;
+
+                            if (crossfadePoiToUrl._pending) {
+                                const next = crossfadePoiToUrl._pending;
+                                crossfadePoiToUrl._pending = null;
+                                crossfadePoiToUrl(next);
+                            }
+                        }, 800);
+                    });
+                });
             };
-            loader.onerror = () => console.warn("Failed to load POI year image:", newUrl);
-            loader.src = newUrl;
+
+            pre.onerror = () => {
+                console.warn("Failed to preload POI year image:", newUrl);
+                crossfadePoiToUrl._busy = false;
+                if (crossfadePoiToUrl._pending) {
+                    const next = crossfadePoiToUrl._pending;
+                    crossfadePoiToUrl._pending = null;
+                    crossfadePoiToUrl(next);
+                }
+            };
+
+            pre.src = newUrl;
         }
 
         function flyToMarkerNoSnap(latlng, zoomTarget, CROPPED_BOUNDS, opts = {}) {
@@ -714,12 +1000,16 @@
 
 
         function hidePOI() {
+            stopAutoplayAll();
             if (!poiActive) return;
-            
             poiActive = false;
             setBaseMapPoiMode(false);
             currentPoiBase = null;
             currentPoiYear = null;
+            currentPoi = null;
+            crossfadePoiToUrl._busy = false;
+            crossfadePoiToUrl._pending = null;
+            stopPoiAutoplay();
             poiImageLayer.classList.remove("visible");
             poiCaptionPanel.classList.add("hidden");
             // Reflect home year in the UI again
@@ -740,68 +1030,121 @@
             const frontUrl = baseFront._url;
             if (!newUrl || frontUrl === newUrl) return;
 
-            // Preload first so we never fade to blank
+            // Latest-wins queue
+            if (crossfadeBaseImageToUrl._busy) {
+                crossfadeBaseImageToUrl._pending = newUrl;
+                return;
+            }
+            crossfadeBaseImageToUrl._busy = true;
+            crossfadeBaseImageToUrl._pending = null;
+
+            const front = baseFront;
+            const back = baseBack;
+            
+            // Preload the new image
             const loader = new Image();
-            loader.onload = () => {
-                // Put new image into the back overlay, keep it invisible initially
-                baseBack.setUrl(newUrl);
-                baseBack.setOpacity(0);
+            loader.onload = async () => {
+                // Set the new URL on the back overlay
+                back.setUrl(newUrl);
 
-                // Ensure styling matches mode
-                const backEl = baseBack.getElement();
-                if (backEl) {
-                    backEl.classList.add("base-map-img");
-                    if (poiActive) backEl.classList.add("poi-mode");
-                    else backEl.classList.remove("poi-mode");
+                const backEl = back.getElement();
+                const frontEl = front.getElement();
+
+                // Ensure elements have the base-map-img class
+                if (frontEl) frontEl.classList.add("base-map-img");
+                if (backEl) backEl.classList.add("base-map-img");
+
+                // Apply POI mode filter if needed
+                if (poiActive) {
+                    if (frontEl) frontEl.classList.add("poi-mode");
+                    if (backEl) backEl.classList.add("poi-mode");
+                } else {
+                    if (frontEl) frontEl.classList.remove("poi-mode");
+                    if (backEl) backEl.classList.remove("poi-mode");
                 }
 
-                // Force layout so opacity transition kicks in
-                if (backEl) backEl.getBoundingClientRect();
-
-                const targetOpacity = baseFront.options.opacity ?? BASE_OPACITY_HOME;
-
-                // Animate both overlays
-                const start = performance.now();
-                const A = targetOpacity;          // e.g. 0.98
-                const eps = 1e-6;
-
-                function easeInOut(t) {
-                    // smoothstep
-                    return t * t * (3 - 2 * t);
+                // Wait for decode if available
+                if (backEl && backEl.decode) {
+                    try { await backEl.decode(); } catch (e) { }
                 }
 
-                function step(ts) {
-                    const raw = Math.min(1, (ts - start) / duration);
-                    const t = easeInOut(raw);
+                const targetOpacity = poiActive ? BASE_OPACITY_POI : BASE_OPACITY_HOME;
 
-                    // Front (old) fades out smoothly from A -> 0
-                    const aFront = A * (1 - t);
+                // Force a layout to ensure back image is loaded and rendered
+                requestAnimationFrame(() => {
+                    requestAnimationFrame(() => {
+                        // Set back to fully opaque FIRST
+                        back.setOpacity(targetOpacity);
+                        front.setOpacity(targetOpacity);
 
-                    // Back (new) computed so combined alpha stays ~A
-                    const denom = Math.max(eps, 1 - aFront);
-                    const aBack = Math.max(0, Math.min(A, (A - aFront) / denom));
+                        // Force paint with both at full opacity
+                        if (backEl) backEl.offsetHeight;
+                        if (frontEl) frontEl.offsetHeight;
 
-                    baseFront.setOpacity(aFront);
-                    baseBack.setOpacity(aBack);
+                        // Ensure z-index stacking (front on top of back)
+                        if (frontEl) frontEl.style.zIndex = '2';
+                        if (backEl) backEl.style.zIndex = '1';
 
-                    if (raw < 1) {
-                        requestAnimationFrame(step);
-                    } else {
-                        // swap roles
-                        const tmp = baseFront;
-                        baseFront = baseBack;
-                        baseBack = tmp;
+                        // Now animate manually - fade ONLY the front
+                        const startTime = performance.now();
 
-                        baseBack.setOpacity(0);
-                    }
-                }
-                requestAnimationFrame(step);
+                        function animate(currentTime) {
+                            const elapsed = currentTime - startTime;
+                            const progress = Math.min(elapsed / duration, 1);
+
+                            // Front fades from targetOpacity to 0
+                            const frontOpacity = targetOpacity * (1 - progress);
+                            front.setOpacity(frontOpacity);
+
+                            // Back STAYS at targetOpacity (never changes)
+                            
+                            if (progress < 1) {
+                                requestAnimationFrame(animate);
+                            } else {
+                                // Animation complete - swap roles
+                                baseFront = back;
+                                baseBack = front;
+
+                                // Reset old front (now back) to 0 for next transition
+                                baseBack.setOpacity(0);
+
+                                // Update z-index for next transition
+                                const newFrontEl = baseFront.getElement();
+                                const newBackEl = baseBack.getElement();
+                                if (newFrontEl) newFrontEl.style.zIndex = '2';
+                                if (newBackEl) newBackEl.style.zIndex = '1';
+
+                                crossfadeBaseImageToUrl._busy = false;
+
+                                // Process pending if any
+                                if (crossfadeBaseImageToUrl._pending) {
+                                    const next = crossfadeBaseImageToUrl._pending;
+                                    crossfadeBaseImageToUrl._pending = null;
+                                    setTimeout(() => {
+                                        crossfadeBaseImageToUrl(next, duration);
+                                    }, 0);
+                                }
+                            }
+                        }
+
+                        requestAnimationFrame(animate);
+                    });
+                });
             };
 
-            loader.onerror = () => console.warn("Failed to preload base image:", newUrl);
+            loader.onerror = () => {
+                console.warn("Failed to preload base image:", newUrl);
+                crossfadeBaseImageToUrl._busy = false;
+                if (crossfadeBaseImageToUrl._pending) {
+                    const next = crossfadeBaseImageToUrl._pending;
+                    crossfadeBaseImageToUrl._pending = null;
+                    setTimeout(() => {
+                        crossfadeBaseImageToUrl(next, duration);
+                    }, 0);
+                }
+            };
             loader.src = newUrl;
         }
-
 
         function setBaseMapPoiMode(on) {
             const overlays = [baseOverlayA, baseOverlayB];
@@ -880,12 +1223,14 @@
                     map.fitBounds(croppedBounds, { padding: [0, 0] });
                     map.setMaxBounds(croppedBounds);
 
+                    // Only set the URL on the front overlay - back stays empty for first transition
                     baseOverlayA = L.imageOverlay(url, fullBounds, {
                         opacity: BASE_OPACITY_HOME,
                         interactive: false
                     }).addTo(map);
 
-                    baseOverlayB = L.imageOverlay(url, fullBounds, {
+                    // Create back overlay with a transparent 1x1 pixel as placeholder
+                    baseOverlayB = L.imageOverlay("data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7", fullBounds, {
                         opacity: 0,
                         interactive: false
                     }).addTo(map);
@@ -920,34 +1265,36 @@
 
                         m.on("click", () => {
                             poiActive = true;
+                            currentPoi = p;
                             setBaseMapPoiMode(true);
 
-
                             const preZoom = map.getZoom();
-                            const zoomTarget = Math.min(preZoom + 1.0, map.getMaxZoom());
+                            const zoomTarget = Math.min(preZoom + 1.3, map.getMaxZoom());
 
                             flyToMarkerNoSnap(L.latLng(lat, lng), zoomTarget, CROPPED_BOUNDS, { padPx: 120, duration: 1.0 });
-
 
                             if (p.image) {
                                 const loader = new Image();
                                 loader.onload = () => {
                                     // Crop top strip of POI image
-                                    applyPoiCrop(poiFront, loader.naturalHeight);
-                                    applyPoiCrop(poiBack, loader.naturalHeight);
+                                    applyPoiCrop(poiFront(), loader.naturalHeight);
+                                    applyPoiCrop(poiBack(), loader.naturalHeight);
                                     // Track POI base/year/ext for stepping
                                     const info = parseImageInfo(p.image) || { base: null, year: null, ext: 'jpg' };
-                                    currentPoiBase = info.base;
+                                    currentPoiBase = currentPoi.name == 'Lijiaxia Hydroelectric Dam' ? 'kanbula' : info.base;
                                     currentPoiYear = info.year;
+                                    updatePoiCaptionForYear(currentPoiYear);
+                                    if (currentPoi?.autoplay?.enabled) {
+                                        startGlobalAutoplay();   // will autoplay this POI and light up the button
+                                    } else {
+                                        stopAutoplayAll();       // keeps the button honest
+                                    }
                                     currentPoiExt = info.ext || 'jpg';
                                     // Preload and fade in smoothly
-                                    poiFront.src = p.image;
-                                    poiFront.style.opacity = '0';
-                                    poiBack.style.opacity = '0';
+                                    poiFront().src = p.image;
                                     poiImageLayer.classList.add("visible");
-                                    requestAnimationFrame(() => {
-                                        poiFront.style.opacity = '1';
-                                    });
+                                    poiFront().style.opacity = "1";
+                                    poiBack().style.opacity = "0";
                                     updateYearLabel();
                                 };
                                 loader.onerror = () => {
@@ -956,8 +1303,7 @@
                                 loader.src = p.image;
                             }
 
-                            poiCaptionTitle.textContent = p.name;
-                            poiCaptionText.textContent = p.info || "";
+                            updatePoiCaptionForYear(currentPoiYear);
                             poiCaptionPanel.classList.remove("hidden");
                         });
                     });
@@ -990,7 +1336,12 @@
 
         function goHome() {
             // Hide any active POI overlay and caption
+            stopAutoplayAll();
             poiActive = false;
+            currentPoi = null;
+            crossfadePoiToUrl._busy = false;
+            crossfadePoiToUrl._pending = null;
+            stopPoiAutoplay();
             setBaseMapPoiMode(false);
             poiImageLayer.classList.remove("visible");
             poiCaptionPanel.classList.add("hidden");
@@ -1018,15 +1369,71 @@
             new HomeControl().addTo(map);
         }
 
-        function stepPoiYear(direction = 1) {
+        function startPoiAutoplay() {
+            stopPoiAutoplay();
+            if (!poiActive || !currentPoiBase || !currentPoi) return;
+
+            const cfg = currentPoi.autoplay;
+            if (!cfg || !cfg.enabled) return;
+
+            const years = getPoiYearList();
+            if (!years.length) return;
+
+            autoplayRunning = true;
+
+            // Start from current year if set, otherwise first year in list
+            let idx = currentPoiYear != null ? Math.max(0, years.indexOf(currentPoiYear)) : 0;
+            if (idx < 0) idx = 0;
+
+            function tick() {
+                if (!autoplayRunning) return;
+
+                const y = years[idx];
+                stepPoiYear(1, y);
+
+                const dwell = getDwellMsForYear(y);
+
+                idx += 1;
+                if (idx >= years.length) {
+                    if (cfg.loop) idx = 0;
+                    else { stopPoiAutoplay(); return; }
+                }
+
+                autoplayTimer = setTimeout(tick, dwell);
+            }
+
+            // Give the current frame a moment, then begin
+            autoplayTimer = setTimeout(tick, 300);
+        }
+
+
+        function stepPoiYear(direction = 1, forcedYear = null) {
             if (!poiActive || !currentPoiBase) return false;
-            const candidates = (currentPoiBase && currentPoiBase.toLowerCase() === 'kanbula') ? YEARS_ALL : YEARS;
+
+            const candidates = getPoiYearList();
             const curr = currentPoiYear;
-            // Build ordered list based on direction
+
+            // If forcedYear provided, go there directly (if it exists in candidates)
+            if (forcedYear != null) {
+                if (!candidates.includes(forcedYear)) return false;
+                const url = `images/${currentPoiBase}_${forcedYear}.${currentPoiExt || 'jpg'}`;
+                const img = new Image();
+                img.onload = () => {
+                    crossfadePoiToUrl(url);
+                    currentPoiYear = forcedYear;
+                    updateYearLabel();
+                    updatePoiCaptionForYear(currentPoiYear);
+                };
+                img.onerror = () => console.warn("Missing POI image:", url);
+                img.src = url;
+                return true;
+            }
+
+            // Existing directional stepping logic
             const ordered = direction > 0
                 ? (curr == null ? candidates.slice() : candidates.filter(y => y > curr))
                 : (curr == null ? candidates.slice().reverse() : candidates.filter(y => y < curr).reverse());
-            // Try each candidate until an existing image is found
+
             function tryAt(i) {
                 if (i >= ordered.length) return;
                 const y = ordered[i];
@@ -1036,6 +1443,7 @@
                     crossfadePoiToUrl(url);
                     currentPoiYear = y;
                     updateYearLabel();
+                    updatePoiCaptionForYear(currentPoiYear);
                 };
                 img.onerror = () => tryAt(i + 1);
                 img.src = url;
@@ -1045,6 +1453,7 @@
         }
 
         yearPrev.addEventListener("click", () => {
+            stopAutoplayAll();
             if (poiActive && currentPoiBase) {
                 stepPoiYear(-1);
                 return;
@@ -1061,6 +1470,7 @@
         });
 
         yearNext.addEventListener("click", () => {
+            stopAutoplayAll();
             if (poiActive && currentPoiBase) {
                 stepPoiYear(1);
                 return;
@@ -1075,6 +1485,20 @@
                 loadBaseImageForYear(newYear);
             }
         });
+
+        if (autoplayToggle) {
+            autoplayToggle.addEventListener("click", () => {
+                if (autoplayRunning2) stopAutoplayAll();
+                else startGlobalAutoplay();
+            });
+        }
+
+        if (autoplaySpeed) {
+            autoplaySpeed.addEventListener("click", () => {
+                speedIdx = (speedIdx + 1) % SPEEDS.length;
+                setAutoplayButtonUI();
+            });
+        }
 
         window.addEventListener("load", () => {
             if (TITLE_BADGE_URL) {
@@ -1094,9 +1518,21 @@
             const hero = document.getElementById("hero");
             const title = document.getElementById("site-title");
             const mapFrame = document.getElementById("map-frame");
-            if (hero) requestAnimationFrame(() => hero.classList.add("visible"));
-            if (title) requestAnimationFrame(() => title.classList.add("visible"));
-            if (mapFrame) setTimeout(() => requestAnimationFrame(() => mapFrame.classList.add("visible")), 400);
+            requestAnimationFrame(() => {
+                document.body.classList.add("bg-visible");
+            });
+
+            setTimeout(() => {
+                if (hero) hero.classList.add("visible");
+            }, 700);
+
+            setTimeout(() => {
+                if (title) title.classList.add("visible");
+            }, 1100);
+
+            setTimeout(() => {
+                if (mapFrame) mapFrame.classList.add("visible");
+            }, 1500);
 
             updateYearLabel();
             loadBaseImageForYear(YEARS[currentYearIndex]);
