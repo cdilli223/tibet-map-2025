@@ -16,20 +16,25 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
 
     <style>
-        html { background: var(--paper); }
-        body {
-            margin:0;
-            min-height:200vh;
-            max-width:100vw;
-            background: transparent;
-            position: relative;
-            z-index: 0;            /* key */
-            isolation: isolate;    /* key: traps negative z-index inside body */
+        html {
+            background: var(--paper);
         }
 
-            /* Fixed image layer */
+        body {
+            margin: 0;
+            min-height: 200vh;
+            max-width: 100vw;
+            background: transparent;
+            position: relative;
+            z-index: 0;
+            /* key */
+            isolation: isolate;
+            /* key: traps negative z-index inside body */
+        }
+
+        /* Fixed image layer */
         body::before {
-            content:"";
+            content: "";
             position: fixed;
             inset: 0;
             z-index: -2;
@@ -37,46 +42,52 @@
             background-size: cover;
             background-position: center calc(50% - 280px);
             opacity: 0;
-            transition: opacity 1.2s ease;  
+            transition: opacity 1.2s ease;
         }
 
         /* Scrolling melt layer */
         body::after {
-            content:"";
+            content: "";
             position: absolute;
-            left:0; right:0;
-            top:0;
+            left: 0;
+            right: 0;
+            top: 0;
             z-index: -1;
-            pointer-events:none;
+            pointer-events: none;
             height: max(200vh, 100%);
             inset: 0;
 
-            background: linear-gradient(
-                to bottom,
-                rgba(0,0,0,0.45) 0%,
-                rgba(0,0,0,0.25) 9%,
-                rgba(0,0,0,0.12) 15%,
-                rgba(201,143,102,0.65) 21%,
-                rgba(201,143,102,0.95) 27%,
-                var(--paper) 35%,
-                var(--paper) 50%,
-                var(--paper) 60%,
-                var(--paper) 70%,
-                var(--paper) 80%,
-                var(--paper) 90%,
-                var(--paper) 100%
-            );
+            background: linear-gradient(to bottom,
+                    rgba(0, 0, 0, 0.45) 0%,
+                    rgba(0, 0, 0, 0.25) 9%,
+                    rgba(0, 0, 0, 0.12) 15%,
+                    rgba(201, 143, 102, 0.65) 21%,
+                    rgba(201, 143, 102, 0.95) 27%,
+                    var(--paper) 35%,
+                    var(--paper) 50%,
+                    var(--paper) 60%,
+                    var(--paper) 70%,
+                    var(--paper) 80%,
+                    var(--paper) 90%,
+                    var(--paper) 100%);
         }
 
         body.bg-visible::before {
             opacity: 1;
         }
 
-        #hero, #site-title, #map-frame {
+        #hero,
+        #site-title,
+        #map-frame {
             will-change: opacity, transform;
         }
 
-        main, section, header, .container, .content, #app {
+        main,
+        section,
+        header,
+        .container,
+        .content,
+        #app {
             background: transparent !important;
         }
 
@@ -160,7 +171,7 @@
                 0 8px 12px rgba(15, 23, 42, 0.6);
         }
 
-        .leaflet-div-icon.poi-marker:hover { 
+        .leaflet-div-icon.poi-marker:hover {
             background: rgba(207, 85, 203, 0.98);
         }
 
@@ -197,7 +208,7 @@
             inset: 0;
             padding: 0.9rem 1.1rem 1.4rem 1.1rem;
             box-sizing: border-box;
-            border-radius: inherit; 
+            border-radius: inherit;
             overflow: hidden;
             pointer-events: none;
         }
@@ -207,6 +218,7 @@
                 padding: 2rem 2.25rem 2.5rem 2.25rem;
             }
         }
+
         /* #poi-image-frame { position: absolute; inset: 0; } */
         #poi-image-inner {
             position: relative;
@@ -215,12 +227,14 @@
             border-radius: var(--poi-radius);
             overflow: hidden;
 
-            background: #0b0f1900;          /* so corners are visible */
+            background: #0b0f1900;
+            /* so corners are visible */
             border: 0px solid rgba(248, 250, 252, 0.1);
             box-shadow: 0 18px 20px rgba(15, 23, 42, 0.6);
         }
 
-        #poi-image-a, #poi-image-b {
+        #poi-image-a,
+        #poi-image-b {
             position: absolute;
             inset: 0;
             width: 100%;
@@ -243,7 +257,10 @@
             max-width: min(640px, 200vw);
         }
 
-        #poi-image-inner, #map, #poi-image-a, #poi-image-b{
+        #poi-image-inner,
+        #map,
+        #poi-image-a,
+        #poi-image-b {
             transform: translateZ(0);
             backface-visibility: hidden;
         }
@@ -339,18 +356,161 @@
             font-size: 16px;
             line-height: 1;
         }
-        .home-control a:hover { background: rgba(138, 7, 15, 0.98); }
+
+        .home-control a:hover {
+            background: rgba(138, 7, 15, 0.98);
+        }
 
         .btn-year-nav.is-active {
             background: rgba(14, 53, 108, 0.98);
             box-shadow: 0 0 0 2px rgba(253, 230, 138, 0.7), 0 2px 8px rgba(15, 23, 42, 0.8);
             border-color: rgba(253, 230, 138, 0.85);
         }
+
+        .hamburger-zone {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 72px;
+            z-index: 9999;
+            pointer-events: auto;
+        }
+
+        /* button appears only when user hovers near top-left */
+        .hamburger-btn {
+            pointer-events: auto;
+            position: absolute;
+            top: 12px;
+            left: 16px;
+            width: 44px;
+            height: 44px;
+            border-radius: 9999px;
+
+            background: rgba(93, 1, 34, 0.9);
+            /* same as btn-year-nav */
+            color: #fef9c3;
+
+            border: 1px solid rgba(248, 250, 252, 0.35);
+            box-shadow:
+                0 2px 5px rgba(15, 23, 42, 0.6),
+                0 10px 20px rgba(15, 23, 42, 0.45);
+
+            display: grid;
+            place-items: center;
+
+            opacity: 0;
+            transform: translateY(-22px);
+            transition:
+                opacity 240ms ease,
+                transform 240ms cubic-bezier(0.22, 1, 0.36, 1),
+                background 220ms ease;
+        }
+
+        /* reveal button when hovering zone OR menu is open */
+        .hamburger-zone:hover .hamburger-btn,
+        .hamburger-zone.open .hamburger-btn,
+        .hamburger-zone.peek .hamburger-btn {
+            opacity: 1;
+            transform: translateY(0);
+        }
+
+        .hamburger-btn:hover {
+            background: rgba(138, 7, 15, 0.98);
+        }
+
+        .hamburger-btn svg,
+        .hamburger-btn span {
+            color: inherit;
+            stroke: currentColor;
+        }
+
+        .hamburger-lines span {
+            display: block;
+            width: 18px;
+            height: 2px;
+            background: currentColor;
+            border-radius: 2px;
+            margin: 3px 0;
+        }
+
+        .hamburger-lines span {
+            display: block;
+            height: 2px;
+            border-radius: 9999px;
+            background: rgba(253, 230, 138, 0.95);
+        }
+
+        /* menu panel */
+        .hamburger-menu {
+            pointer-events: auto;
+            position: absolute;
+            top: 66px;
+            left: 14px;
+            min-width: 220px;
+            padding: 10px;
+            border-radius: 0.75rem;
+            border: 1px solid rgba(248, 250, 252, 0.12);
+            background: rgba(15, 23, 42, 0.92);
+            color: #fef3c7;
+            box-shadow:
+                0 18px 35px rgba(15, 23, 42, 0.75),
+                0 0 0 1px rgba(248, 250, 252, 0.06);
+            opacity: 0;
+            transform: translateY(-8px) scale(0.98);
+            transform-origin: top left;
+            transition: opacity 220ms ease, transform 220ms ease;
+            display: none;
+        }
+
+        .hamburger-menu a {
+            color: #fef9c3;
+            padding: 0.5rem 0.75rem;
+            border-radius: 0.5rem;
+        }
+
+        .hamburger-menu a:hover {
+            background: rgba(138, 7, 15, 0.25);
+        }
+
+        .hamburger-zone.open .hamburger-menu {
+            display: block;
+            opacity: 1;
+            transform: translateY(0) scale(1);
+        }
+
+        .hamburger-item {
+            width: 100%;
+            text-align: left;
+            padding: 9px 10px;
+            border-radius: 10px;
+            border: 1px solid transparent;
+            background: transparent;
+            color: rgba(254, 243, 199, 0.95);
+            letter-spacing: 0.08em;
+            font-size: 12px;
+            text-transform: uppercase;
+            cursor: pointer;
+        }
+
+        .hamburger-item:hover {
+            background: rgba(255, 255, 255, 0.08);
+            border-color: rgba(253, 230, 138, 0.25);
+        }
+
+        /* makes the zone visible on mobile too: always show button if you want */
+        @media (max-width: 640px) {
+            .hamburger-btn {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
 <body>
     <div class="min-h-screen flex flex-col">
+        <div id="hamburger-mount"></div>
         <!-- Hero / title -->
         <header id="hero" class="fade-in">
             <div class="bg-gradient-to-b from-black/40 via-black/20 to-transparent">
@@ -386,13 +546,15 @@
                                         <div
                                             class="inline-flex items-center gap-1 bg-yellow-50/95 border border-yellow-900/60 rounded-full px-2.5 py-1.5 shadow-md shadow-slate-900/40">
                                             <button id="year-prev" class="btn-year-nav">‹</button>
-                                            
-                                            <button id="autoplay-toggle" class="btn-year-nav" title="Play/Pause">▶</button>
+
+                                            <button id="autoplay-toggle" class="btn-year-nav"
+                                                title="Play/Pause">▶</button>
                                             <button id="autoplay-speed" class="btn-year-nav" title="Speed">1x</button>
 
                                             <!-- fixed width block -->
                                             <div class="flex flex-col items-center mx-1 w-[5.5rem]">
-                                                <span id="year-label" class="year-badge text-sm md:text-base block w-full text-center">
+                                                <span id="year-label"
+                                                    class="year-badge text-sm md:text-base block w-full text-center">
                                                     1984
                                                 </span>
                                                 <span id="year-tibetan-label"
@@ -428,7 +590,8 @@
                                                     Region
                                                 </h3>
                                                 <p id="poi-caption-text"
-                                                    class="text-[0.78rem] md:text-sm text-amber-50/95 leading-snug"></p>
+                                                    class="text-[0.78rem] md:text-sm text-amber-50/95 leading-snug">
+                                                </p>
                                             </div>
                                             <button id="poi-close"
                                                 class="ml-2 text-[0.65rem] uppercase tracking-[0.18em] rounded-full border border-amber-50/40 px-2 py-1 text-amber-100/90 bg-white/5 hover:bg-white/15 transition">
@@ -458,12 +621,13 @@
                                         or high-altitude river sources.
                                     </p>
                                     <p class="mb-2">
-                                        Use the year control to <span class="font-semibold">step through decades</span>,
+                                        Use the year control to <span class="font-semibold">step through
+                                            decades</span>,
                                         revealing how water has shifted in response to climate and policy.
                                     </p>
-                                        
+
                                     <p>
-                                        The set of reference scenes dispalyed here  make
+                                        The set of reference scenes dispalyed here make
                                         hydrological change intuitive at a glance, representing only a small portion
                                         of changes that are occurring across the plateau.
                                     </p>
@@ -478,6 +642,7 @@
 
     <!-- Leaflet JS -->
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin="anonymous"></script>
+    <script src="js/hamburger.js"></script>
 
     <script>
         const CROP_TOP_PX = 110;
@@ -490,10 +655,10 @@
         const YEARS_ALL = [1984, 1990, 1995, 1996, 1997, 1998, 1999, 2000, 2001, 2002, 2010, 2020];
 
         const YEARS_ZHANANG = [
-                1984,
-                1990,
-                ...Array.from({ length: 2020 - 1990 + 1 }, (_, i) => 1991 + i)
-            ];
+            1984,
+            1990,
+            ...Array.from({ length: 2020 - 1990 + 1 }, (_, i) => 1991 + i)
+        ];
 
         // Tibetan year names mapping (can be refined later)
         const TIBETAN_YEAR_NAMES = {
@@ -708,7 +873,7 @@
 
         function setAutoplayButtonUI() {
             if (autoplayToggle) autoplayToggle.textContent = autoplayRunning2 ? "❚❚" : "▶";
-            if (autoplaySpeed) autoplaySpeed.textContent = `${["0.5x","0.75x", "1x", "1.25x", "1.5x"][speedIdx]}`;
+            if (autoplaySpeed) autoplaySpeed.textContent = `${["0.5x", "0.75x", "1x", "1.25x", "1.5x"][speedIdx]}`;
         }
 
         function stopAutoplayAll() {
@@ -721,6 +886,12 @@
             stopPoiAutoplay();
             setAutoplayButtonUI();
         }
+
+        /* Hook up menu actions */
+        const menuHome = document.getElementById("menu-home");
+        const menuAbout = document.getElementById("menu-about");
+        const menuToggleBase = document.getElementById("menu-toggle-base");
+        const menuTogglePoi = document.getElementById("menu-toggle-poi");
 
         function stepBaseYear(direction = 1) {
             // base autoplay should not be running a POI overlay
@@ -1040,7 +1211,7 @@
 
             const front = baseFront;
             const back = baseBack;
-            
+
             // Preload the new image
             const loader = new Image();
             loader.onload = async () => {
@@ -1097,7 +1268,7 @@
                             front.setOpacity(frontOpacity);
 
                             // Back STAYS at targetOpacity (never changes)
-                            
+
                             if (progress < 1) {
                                 requestAnimationFrame(animate);
                             } else {
@@ -1320,10 +1491,10 @@
                     if (mapDiv) mapDiv._leaflet_map = map;
 
                     setTimeout(() => map.invalidateSize(), 0);
-                } else if (baseFront && baseBack) { 
-                    crossfadeBaseImageToUrl(url); 
-                } else { 
-                    baseFront?.setUrl?.(url); 
+                } else if (baseFront && baseBack) {
+                    crossfadeBaseImageToUrl(url);
+                } else {
+                    baseFront?.setUrl?.(url);
                 }
             };
 
@@ -1544,6 +1715,17 @@
                 mapDiv._leaflet_map.invalidateSize();
             }
         });
+
+        fetch("partials/hamburger.html")
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status} for partials/hamburger.html`);
+                return res.text();
+            })
+            .then(html => {
+                document.getElementById("hamburger-mount").innerHTML = html;
+                initHamburgerMenu();
+            })
+            .catch(err => console.error("Hamburger load failed", err));
     </script>
 </body>
 

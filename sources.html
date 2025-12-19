@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Sources – Historical Hydrology of Tibet</title>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.png">
+
+    <style>
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: #c98f66;
+        }
+
+        .tibetan-title {
+            font-family: "Cinzel", serif;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+        }
+
+        .main-card {
+            border-radius: 1.5rem;
+            background: #fef3c7;
+            box-shadow:
+                0 25px 50px -12px rgba(15, 23, 42, .65),
+                0 0 0 1px rgba(15, 23, 42, .15);
+        }
+    </style>
+</head>
+
+<body>
+    <div id="hamburger-mount"></div>
+        <header class="py-10 text-center">
+            <h1 class="tibetan-title text-2xl text-slate-900">Sources</h1>
+        </header>
+
+        <main class="max-w-4xl mx-auto px-6 pb-16">
+            <div class="main-card p-6 md:p-8 text-slate-900 space-y-4">
+                <ul class="list-disc pl-5 space-y-2">
+                    <li>Google Earth – historical imagery time slider</li>
+                    <li>Landsat archive – USGS / NASA</li>
+                    <li>Sentinel imagery – Copernicus / ESA</li>
+                    <li>Peer-reviewed literature on Tibetan Plateau hydrology</li>
+                </ul>
+
+                <p class="text-sm text-slate-700">
+                    Specific citations will be added as individual POIs are finalized.
+                </p>
+            </div>
+        </main>
+
+        <script src="js/hamburger.js"></script>
+        <script>
+            fetch("partials/hamburger.html")
+                .then(res => res.text())
+                .then(html => {
+                    document.getElementById("hamburger-mount").innerHTML = html;
+
+                    // Now that it exists, wire it up
+                    initHamburgerMenu();
+                })
+                .catch(err => console.error("Hamburger load failed", err));
+        </script>
+
+</body>
+
+</html>
