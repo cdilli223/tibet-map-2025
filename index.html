@@ -16,36 +16,58 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="anonymous" />
 
     <style>
-        html,
+        html { background: var(--paper); }
         body {
-            max-width: 100vw;
-            overflow-x: hidden;
+            margin:0;
+            min-height:200vh;
+            max-width:100vw;
+            background: transparent;
+            position: relative;
+            z-index: 0;            /* key */
+            isolation: isolate;    /* key: traps negative z-index inside body */
         }
 
-        body {
-            margin: 0;
-            padding: 0;
+            /* Fixed image layer */
+        body::before {
+            content:"";
+            position: fixed;
+            inset: 0;
+            z-index: -2;
+            background: url("images/Avalokitesvara.jpg") no-repeat;
+            background-size: cover;
+            background-position: center calc(50% - 280px);
+        }
 
-            background-image:
-                linear-gradient(
+        /* Scrolling melt layer */
+        body::after {
+            content:"";
+            position: absolute;
+            left:0; right:0;
+            top:0;
+            z-index: -1;
+            pointer-events:none;
+            height: max(200vh, 100%);
+            inset: 0;
+
+            background: linear-gradient(
                 to bottom,
-                rgba(0,0,0,0.55) 0%,
-                rgba(0,0,0,0.25) 20%,
-                rgba(201,143,102,0.95) 55%,
-                #c98f66 100%
-                ),
-                url("images/Avalokitesvara.jpg");
+                rgba(0,0,0,0.45) 0%,
+                rgba(0,0,0,0.25) 9%,
+                rgba(0,0,0,0.12) 15%,
+                rgba(201,143,102,0.65) 21%,
+                rgba(201,143,102,0.95) 27%,
+                var(--paper) 35%,
+                var(--paper) 50%,
+                var(--paper) 60%,
+                var(--paper) 70%,
+                var(--paper) 80%,
+                var(--paper) 90%,
+                var(--paper) 100%
+            );
+        }
 
-            /* first value = gradient layer, second value = image layer */
-            background-position: center center, center calc(50% - 260px);
-            background-size: 100% 100%, cover;
-            background-repeat: no-repeat, no-repeat;
-
-            /* keep the image fixed; the gradient can just scroll */
-            background-attachment: scroll, fixed;
-
-            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
-            color: #1f2933;
+        main, section, header, .container, .content, #app {
+            background: transparent !important;
         }
 
         .tibetan-title {
@@ -70,10 +92,10 @@
         }
 
         :root {
-            /* updated from JS: imgW / imgH */
             --map-aspect: 2;
             --caption-bottom: 0.25rem;
             --poi-radius: 18px;
+            --paper: #c98f66;
         }
 
         .map-frame {
@@ -525,12 +547,17 @@
         const TITLE_BADGE_SCALE = 1.4;
 
         let map;
-        let baseOverlay;
+        let baseOverlayA = null;
+        let baseOverlayB = null;
+        let baseFront = null;
+        let baseBack = null;
         let imgW = FALLBACK_WIDTH;
         let imgH = FALLBACK_HEIGHT;
 
         let currentYearIndex = YEARS.indexOf(2020);
         if (currentYearIndex < 0) currentYearIndex = YEARS.length - 1;
+
+        let CROPPED_BOUNDS = null;
 
         let homeCenter = null;
         let homeZoom = null;
@@ -647,6 +674,45 @@
             loader.src = newUrl;
         }
 
+        function flyToMarkerNoSnap(latlng, zoomTarget, CROPPED_BOUNDS, opts = {}) {
+            if (!map) return;
+
+            const duration = opts.duration ?? 1.0;
+            const padPx = opts.padPx ?? 120;
+
+            const size = map.getSize();
+            const half = size.divideBy(2);
+            const pad = L.point(padPx, padPx);
+
+            // POI pixel position at target zoom
+            const p = map.project(latlng, zoomTarget);
+
+            // "Safe" screen rectangle where we allow the POI to appear
+            const minS = pad;
+            const maxS = size.subtract(pad);
+
+            // Try to put the POI in the center of the screen,
+            // but clamp that desired screen position to the safe rectangle.
+            const desiredS = L.point(
+                Math.max(minS.x, Math.min(half.x, maxS.x)),
+                Math.max(minS.y, Math.min(half.y, maxS.y))
+            );
+
+            // Center pixel needed so that: screen = (p - center) + half  =>  center = p + half - screen
+            let c = p.add(half).subtract(desiredS);
+            let centerLL = map.unproject(c, zoomTarget);
+
+            // Clamp center to bounds using Leaflet's own math to prevent end-of-fly snapping
+            const mb = map.options.maxBounds || (CROPPED_BOUNDS ? L.latLngBounds(CROPPED_BOUNDS) : null);
+            if (mb && typeof map._limitCenter === "function") {
+                centerLL = map._limitCenter(centerLL, zoomTarget, mb);
+            }
+
+            map.flyTo(centerLL, zoomTarget, { animate: true, duration });
+        }
+
+
+
         function hidePOI() {
             if (!poiActive) return;
             
@@ -661,58 +727,90 @@
             if (homeCenter && typeof homeZoom === "number") {
                 map.flyTo(homeCenter, homeZoom, {
                     animate: true,
-                    duration: 0.9
+                    duration: 1.0
                 });
             }
         }
 
         poiClose.addEventListener("click", hidePOI);
 
-        function crossfadeBaseImageToUrl(newUrl) {
-            if (!map || !baseOverlay) return;
+        function crossfadeBaseImageToUrl(newUrl, duration = 800) {
+            if (!map || !baseFront || !baseBack) return;
 
-            const oldUrl = baseOverlay._url;
-            if (!oldUrl || oldUrl === newUrl) return;
+            const frontUrl = baseFront._url;
+            if (!newUrl || frontUrl === newUrl) return;
 
-            const ghost = L.imageOverlay(
-                oldUrl,
-                baseOverlay.getBounds(),
-                {
-                    opacity: baseOverlay.options.opacity || 0.98,
-                    interactive: false
+            // Preload first so we never fade to blank
+            const loader = new Image();
+            loader.onload = () => {
+                // Put new image into the back overlay, keep it invisible initially
+                baseBack.setUrl(newUrl);
+                baseBack.setOpacity(0);
+
+                // Ensure styling matches mode
+                const backEl = baseBack.getElement();
+                if (backEl) {
+                    backEl.classList.add("base-map-img");
+                    if (poiActive) backEl.classList.add("poi-mode");
+                    else backEl.classList.remove("poi-mode");
                 }
-            ).addTo(map);
-            const ghostEl = ghost.getElement();
-            if (ghostEl) {
-                ghostEl.classList.add("base-map-img");
-                // If we're currently in POI mode, keep the ghost styled too
-                if (poiActive) ghostEl.classList.add("poi-mode");
-            }
 
-            // Swap the base overlay to the new URL immediately
-            baseOverlay.setUrl(newUrl);
+                // Force layout so opacity transition kicks in
+                if (backEl) backEl.getBoundingClientRect();
 
-            const start = performance.now();
-            const duration = 300; // ms
+                const targetOpacity = baseFront.options.opacity ?? BASE_OPACITY_HOME;
 
-            function fade(ts) {
-                const t = Math.min(1, (ts - start) / duration);
-                const op = (1 - t) * (baseOverlay.options.opacity || 0.98);
-                ghost.setOpacity(op);
-                if (t < 1) {
-                    requestAnimationFrame(fade);
-                } else {
-                    map.removeLayer(ghost);
+                // Animate both overlays
+                const start = performance.now();
+                const A = targetOpacity;          // e.g. 0.98
+                const eps = 1e-6;
+
+                function easeInOut(t) {
+                    // smoothstep
+                    return t * t * (3 - 2 * t);
                 }
-            }
-            requestAnimationFrame(fade);
+
+                function step(ts) {
+                    const raw = Math.min(1, (ts - start) / duration);
+                    const t = easeInOut(raw);
+
+                    // Front (old) fades out smoothly from A -> 0
+                    const aFront = A * (1 - t);
+
+                    // Back (new) computed so combined alpha stays ~A
+                    const denom = Math.max(eps, 1 - aFront);
+                    const aBack = Math.max(0, Math.min(A, (A - aFront) / denom));
+
+                    baseFront.setOpacity(aFront);
+                    baseBack.setOpacity(aBack);
+
+                    if (raw < 1) {
+                        requestAnimationFrame(step);
+                    } else {
+                        // swap roles
+                        const tmp = baseFront;
+                        baseFront = baseBack;
+                        baseBack = tmp;
+
+                        baseBack.setOpacity(0);
+                    }
+                }
+                requestAnimationFrame(step);
+            };
+
+            loader.onerror = () => console.warn("Failed to preload base image:", newUrl);
+            loader.src = newUrl;
         }
 
+
         function setBaseMapPoiMode(on) {
-            if (!baseOverlay) return;
-            const el = baseOverlay.getElement();
-            if (!el) return;
-            el.classList.toggle("poi-mode", !!on);
+            const overlays = [baseOverlayA, baseOverlayB];
+            overlays.forEach(ov => {
+                if (!ov) return;
+                const el = ov.getElement();
+                if (!el) return;
+                el.classList.toggle("poi-mode", !!on);
+            });
         }
 
         function loadBaseImageForYear(year) {
@@ -728,6 +826,7 @@
 
                 const fullBounds = [[0, 0], [imgH, imgW]];
                 const croppedBounds = [[CROP_TOP_PX, 0], [imgH, imgW]];
+                CROPPED_BOUNDS = croppedBounds;
 
                 if (!map) {
                     map = L.map("map", {
@@ -781,13 +880,23 @@
                     map.fitBounds(croppedBounds, { padding: [0, 0] });
                     map.setMaxBounds(croppedBounds);
 
-                    baseOverlay = L.imageOverlay(url, fullBounds, {
-                        opacity: 0.98,
+                    baseOverlayA = L.imageOverlay(url, fullBounds, {
+                        opacity: BASE_OPACITY_HOME,
                         interactive: false
                     }).addTo(map);
 
-                    const baseEl = baseOverlay.getElement();
-                    if (baseEl) baseEl.classList.add("base-map-img");
+                    baseOverlayB = L.imageOverlay(url, fullBounds, {
+                        opacity: 0,
+                        interactive: false
+                    }).addTo(map);
+
+                    baseFront = baseOverlayA;
+                    baseBack = baseOverlayB;
+
+                    const aEl = baseOverlayA.getElement();
+                    const bEl = baseOverlayB.getElement();
+                    if (aEl) aEl.classList.add("base-map-img");
+                    if (bEl) bEl.classList.add("base-map-img");
 
                     const markerLayer = L.layerGroup().addTo(map);
 
@@ -817,10 +926,8 @@
                             const preZoom = map.getZoom();
                             const zoomTarget = Math.min(preZoom + 1.0, map.getMaxZoom());
 
-                            map.flyTo([lat, lng], zoomTarget, {
-                                animate: true,
-                                duration: 0.9
-                            });
+                            flyToMarkerNoSnap(L.latLng(lat, lng), zoomTarget, CROPPED_BOUNDS, { padPx: 120, duration: 1.0 });
+
 
                             if (p.image) {
                                 const loader = new Image();
@@ -867,9 +974,10 @@
                     if (mapDiv) mapDiv._leaflet_map = map;
 
                     setTimeout(() => map.invalidateSize(), 0);
-                } else {
-                    // Map already exists; use crossfade for year transition
-                    crossfadeBaseImageToUrl(url);
+                } else if (baseFront && baseBack) { 
+                    crossfadeBaseImageToUrl(url); 
+                } else { 
+                    baseFront?.setUrl?.(url); 
                 }
             };
 
@@ -941,10 +1049,11 @@
                 stepPoiYear(-1);
                 return;
             }
+            poiActive = false;
             currentYearIndex = (currentYearIndex - 1 + YEARS.length) % YEARS.length;
             updateYearLabel();
             const newYear = YEARS[currentYearIndex];
-            if (map && baseOverlay) {
+            if (map && baseFront && baseBack) {
                 crossfadeBaseImageToUrl(baseImageForYear(newYear));
             } else {
                 loadBaseImageForYear(newYear);
@@ -956,10 +1065,11 @@
                 stepPoiYear(1);
                 return;
             }
+            poiActive = false;
             currentYearIndex = (currentYearIndex + 1) % YEARS.length;
             updateYearLabel();
             const newYear = YEARS[currentYearIndex];
-            if (map && baseOverlay) {
+            if (map && baseFront && baseBack) {
                 crossfadeBaseImageToUrl(baseImageForYear(newYear));
             } else {
                 loadBaseImageForYear(newYear);
