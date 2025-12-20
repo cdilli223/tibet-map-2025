@@ -72,39 +72,46 @@
 /* POI overlay */
 .poi-image-layer {
     position: absolute;
-    inset: -2px;
+    inset: 10px;
     z-index: 10;
     pointer-events: none;
     opacity: 0;
-    transition: opacity 0.5s ease;
-    transform: translateY(-50px);
+
+    transition: opacity 0.5s ease, transform 0.5s ease;
+
+    transform: translateY(-55px);
+
     border-radius: var(--poi-radius);
     overflow: hidden;
 }
-
 .poi-image-layer.visible {
     opacity: 1;
+    transform: translateY(-55px);
 }
 
 #poi-image-frame {
     position: absolute;
     inset: 0;
-    padding: 0.9rem 1.1rem 1.4rem 1.1rem;
+
+    /* More padding = smaller POI image in the frame */
+    padding: 1.15rem 1.15rem 1.75rem 1.15rem;
+
     box-sizing: border-box;
     border-radius: inherit;
     overflow: hidden;
     pointer-events: none;
 }
 
-@media (min-width:768px) {
+@media (min-width: 768px) {
     #poi-image-frame {
-        padding: 2rem 2.25rem 2.5rem 2.25rem;
+        padding: 2.25rem 2.5rem 3.0rem 2.5rem;
     }
 }
 
-@media (min-width:1024px) {
+@media (min-width: 1024px) {
     #poi-image-frame {
-        padding: 0.7rem 0.9rem 1.2rem 0.9rem;
+        /* Keep the overlay from ballooning on larger screens */
+        padding: 1.4rem 1.6rem 2.1rem 1.6rem;
     }
 }
 

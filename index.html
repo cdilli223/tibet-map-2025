@@ -150,6 +150,16 @@
                                         the play/pause button again, by clicking on
                                         a POI marker, or by using the ‹ and › buttons.
                                     </p>
+                                    <p class="mt-4">
+                                        To <span class="font-semibold">return to the full plateau view</span>, click the home button ཡུལ or "Close" on the POI
+                                        caption.
+                                    </p>
+                                    <p class="mt-4">
+                                        This map is a starting point for exploring Tibet's dynamic hydrology.
+                                        For a deeper dive into the data sources and artwork, visit the
+                                        <a href="sources.html" class="underline text-yellow-300 hover:text-yellow-800 transition">Sources</a>
+                                        page.
+                                    </p>
                                 </div>
                             </aside>
                         </div>
@@ -1032,7 +1042,9 @@
                                     currentPoiYear = info.year;
                                     updatePoiCaptionForYear(currentPoiYear);
                                     if (currentPoi?.autoplay?.enabled) {
-                                        startGlobalAutoplay();   // will autoplay this POI and light up the button
+                                        const flyMs = 2000;      // matches flyToMarkerNoSnap duration: 1.0 sec
+                                        const bufferMs = 250;    // small grace period so the first frame is actually seen
+                                        setTimeout(() => startGlobalAutoplay(), flyMs + bufferMs);   // will autoplay this POI and light up the button
                                     } else {
                                         stopAutoplayAll();       // keeps the button honest
                                     }
