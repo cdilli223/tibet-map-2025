@@ -1,0 +1,315 @@
+/* css/site.css */
+
+:root {
+    --paper: #c98f66;
+
+    /* per-page hero image */
+    --hero-bg-image: url("../images/Avalokitesvara.jpg");
+    --hero-bg-position: center calc(50% - 280px);
+
+    --font-body: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+/* base */
+html {
+    background: var(--paper);
+}
+
+body {
+    font-family: var(--font-body);
+    margin: 0;
+    min-height: 200vh;
+    max-width: 100vw;
+    background: transparent;
+    position: relative;
+    z-index: 0;
+    isolation: isolate;
+}
+
+/* Fixed image layer */
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    z-index: -2;
+    /* Use per-page --bg-image when set; otherwise fall back to the default. */
+    background-image: var(--bg-image, var(--hero-bg-image));
+    background-repeat: no-repeat;
+    background-size: cover;
+    background-position: var(--bg-position, center center);
+    opacity: 0;
+    transition: opacity 1.2s ease;
+}
+
+/* Scrolling melt layer */
+body::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    height: max(200vh, 100%);
+    background: linear-gradient(to bottom,
+            rgba(0, 0, 0, 0.45) 0%,
+            rgba(0, 0, 0, 0.25) 9%,
+            rgba(0, 0, 0, 0.12) 15%,
+            rgba(201, 143, 102, 0.65) 21%,
+            rgba(201, 143, 102, 0.95) 27%,
+            var(--paper) 35%,
+            var(--paper) 50%,
+            var(--paper) 60%,
+            var(--paper) 70%,
+            var(--paper) 80%,
+            var(--paper) 90%,
+            var(--paper) 100%);
+}
+
+body.bg-visible::before {
+    opacity: 1;
+}
+
+body.page-sources {
+    --bg-image: url("../images/prajnaparamita.jpeg");
+    --bg-position: center calc(50%);
+}
+
+body.page-about {
+    --bg-image: url("../images/green_tara.jpg");
+    --bg-position: center calc(50%);
+}
+
+body.page-home {
+    --bg-image: url("../images/Avalokitesvara.jpg");
+    --bg-position: center calc(50% - 280px);
+}
+
+p {
+    font-family: var(--font-body);
+    font-size: 0.95rem;
+    line-height: 1.7;
+    margin: 0 0 0.9em 0;
+}
+
+ul, ol {
+  font-family: var(--font-body);
+  line-height: 1.65;
+  margin-left: 1.25rem;
+}
+
+li {
+  margin-bottom: 0.4rem;
+}
+
+/* avoid opaque wrappers */
+main,
+section,
+header,
+.container,
+.content,
+#app {
+    background: transparent !important;
+}
+
+/* typography + card */
+.tibetan-title {
+    font-family: "Cinzel", serif;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+}
+
+.text-shadow-soft {
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+}
+
+.main-card {
+    border-radius: 1.5rem;
+    box-shadow:
+        0 25px 50px -12px rgba(15, 23, 42, 0.65),
+        0 0 0 1px rgba(15, 23, 42, 0.15);
+}
+
+#title-badge {
+    display: none !important;
+}
+
+/* fades */
+#hero,
+#site-title,
+#map-frame {
+    will-change: opacity, transform;
+}
+
+.fade-in {
+    opacity: 0;
+    transform: translateY(10px);
+    transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.fade-in.visible {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.fade-delay-1 {
+    transition-delay: 0.4s;
+}
+
+.fade-delay-2 {
+    transition-delay: 0.8s;
+}
+
+/* Hamburger hotzone */
+.hamburger-zone {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 100px;
+    z-index: 9999;
+    pointer-events: auto;
+}
+
+.hamburger-btn {
+    pointer-events: auto;
+    position: absolute;
+    top: 12px;
+    left: 16px;
+    width: 44px;
+    height: 44px;
+    border-radius: 9999px;
+    background: rgba(93, 1, 34, 0.9);
+    color: #fef9c3;
+    border: 1px solid rgba(248, 250, 252, 0.35);
+    box-shadow: 0 2px 5px rgba(15, 23, 42, 0.6), 0 10px 20px rgba(15, 23, 42, 0.45);
+    display: grid;
+    place-items: center;
+    opacity: 0;
+    transform: translateY(-22px);
+    transition: opacity 240ms ease, transform 240ms cubic-bezier(0.22, 1, 0.36, 1), background 220ms ease;
+}
+
+.hamburger-zone:hover .hamburger-btn,
+.hamburger-zone.open .hamburger-btn,
+.hamburger-zone.peek .hamburger-btn {
+    opacity: 1;
+    transform: translateY(0);
+}
+
+.hamburger-btn:hover {
+    background: rgba(138, 7, 15, 0.98);
+}
+
+/* The 3 lines */
+.hamburger-lines span {
+    display: block;
+    width: 18px;
+    height: 2px;
+    margin: 3px 0;
+    border-radius: 9999px;
+    background: rgba(253, 230, 138, 0.95);
+}
+
+/* The menu panel */
+.hamburger-menu {
+    pointer-events: auto;
+    position: absolute;
+    top: 66px;
+    left: 14px;
+    min-width: 220px;
+    padding: 10px;
+    border-radius: 0.75rem;
+    border: 1px solid rgba(248, 250, 252, 0.12);
+    background: rgba(15, 23, 42, 0.92);
+    color: #fef3c7;
+    box-shadow: 0 18px 35px rgba(15, 23, 42, 0.75), 0 0 0 1px rgba(248, 250, 252, 0.06);
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+    transform-origin: top left;
+    transition: opacity 220ms ease, transform 220ms ease;
+    display: none;
+    gap: 8px;
+}
+
+.hamburger-zone.open .hamburger-menu {
+    display: flex;
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    flex-direction: column;
+    align-items: stretch;
+}
+
+.hamburger-menu .hamburger-item,
+.hamburger-menu a.hamburger-item {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+
+    padding: 10px 12px;
+    border-radius: 12px;
+
+    text-decoration: none;
+    text-align: left;
+
+    font-family: "Cinzel", serif;
+    letter-spacing: 0.10em;
+    text-transform: uppercase;
+    font-size: 12px;
+
+    color: rgba(254, 243, 199, 0.95);
+    border: 1px solid transparent;
+
+    background: transparent;
+    cursor: pointer;
+
+    transition: background 160ms ease, border-color 160ms ease, transform 160ms ease;
+}
+
+.hamburger-menu .hamburger-item:hover {
+    background: rgba(138, 7, 15, 0.22);
+    border-color: rgba(253, 230, 138, 0.28);
+    transform: translateX(2px);
+}
+
+/* Optional: highlight current page if you add aria-current="page" */
+.hamburger-menu .hamburger-item[aria-current="page"] {
+    background: rgba(253, 230, 138, 0.14);
+    border-color: rgba(253, 230, 138, 0.45);
+}
+
+@media (max-width: 640px) {
+    .hamburger-btn {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Chicago-style hanging indent for bibliography entries */
+.chicago-bib {
+    list-style: none;
+    /* optional: remove bullets */
+    padding-left: 0;
+    /* optional */
+    margin-left: 0;
+    /* optional */
+}
+
+.chicago-bib>li {
+    margin: 0 0 0.75rem 0;
+    /* spacing between entries */
+    padding-left: 2em;
+    /* how far wrapped lines bump in */
+    text-indent: -2em;
+    /* pulls first line back out */
+    line-height: 1.55;
+}
+
+/* If you want bullets/numbers, keep list-style and just offset it */
+.chicago-bib.keep-markers {
+    list-style: disc;
+    padding-left: 1.25rem;
+}
+
+.chicago-bib.keep-markers>li {
+    padding-left: 2em;
+    text-indent: -2em;
+}

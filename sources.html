@@ -8,64 +8,174 @@
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.png" sizes="any">
 
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: #c98f66;
-        }
-
-        .tibetan-title {
-            font-family: "Cinzel", serif;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-
-        .main-card {
-            border-radius: 1.5rem;
-            background: #fef3c7;
-            box-shadow:
-                0 25px 50px -12px rgba(15, 23, 42, .65),
-                0 0 0 1px rgba(15, 23, 42, .15);
-        }
-    </style>
+    <link rel="stylesheet" href="css/site.css">
 </head>
 
-<body>
-    <div id="hamburger-mount"></div>
-        <header class="py-10 text-center">
-            <h1 class="tibetan-title text-2xl text-slate-900">Sources</h1>
+<body class="page-sources">
+    <div class="min-h-screen flex flex-col">
+        <div id="hamburger-mount"></div>
+
+        <!-- Hero -->
+        <header id="hero" class="fade-in">
+            <div class="bg-gradient-to-b from-black/40 via-black/20 to-transparent">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 md:py-12">
+                    <div class="flex flex-col items-center gap-3">
+                        <h1 id="site-title"
+                            class="tibetan-title text-2xl sm:text-3xl md:text-4xl text-amber-100 text-shadow-soft tracking-[0.22em] text-center fade-in">
+                            SOURCES
+                        </h1>
+                        <p class="mt-1 max-w-xl text-center text-sm md:text-base text-amber-100/90">
+                            Data provenance, imagery archives, and scholarship.
+                        </p>
+                    </div>
+                </div>
+            </div>
         </header>
 
-        <main class="max-w-4xl mx-auto px-6 pb-16">
-            <div class="main-card p-6 md:p-8 text-slate-900 space-y-4">
-                <ul class="list-disc pl-5 space-y-2">
-                    <li>Google Earth – historical imagery time slider</li>
-                    <li>Landsat archive – USGS / NASA</li>
-                    <li>Sentinel imagery – Copernicus / ESA</li>
-                    <li>Peer-reviewed literature on Tibetan Plateau hydrology</li>
-                </ul>
-
-                <p class="text-sm text-slate-700">
-                    Specific citations will be added as individual POIs are finalized.
-                </p>
-            </div>
+        <!-- Content -->
+        <main class="flex-1">
+            <section class="py-6 md:py-8 lg:py-10">
+                <div class="max-w-4xl mx-auto px-4 sm:px-6">
+                    <div
+                        class="main-card px-6 md:px-8 py-6 md:py-8 border border-yellow-900/40 text-amber-100/90 space-y-5">
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Map:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>“Google Historical Imagery: Google Earth pro, Maps and Timelapse.” Google News Initiative, n.d.
+                            https://newsinitiative.withgoogle.com/resources/trainings/google-historical-imagery-google-earth-maps-and-timelapse/#:~:text=A%20Timelapse%20map%20can%20be,beginning %20as%20early%20as%201984.</li>
+                            <li>Google. <i>Google Earth</i>. Computer software with historical imagery. Google LLC. https://earth.google.com/</li>
+                            <li>Leaflet. <i>Leaflet: An Open-Source JavaScript Library for Interactive Maps</i>. Computer software. Vladimir Agafonkin and
+                            contributors. https://leafletjs.com/</li>
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Himalayan Glaciers and Cryosphere:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>
+                                Bolch, Tobias, et al. “The State and Fate of Himalayan Glaciers.”
+                                <i>Science</i> 336, no. 6079 (2012): 310–314.
+                                https://doi.org/10.1126/science.1215828.
+                            </li>
+                            <li>
+                                Brun, Fanny, Etienne Berthier, Philippe Wagnon, Arun K. Kääb, and David E. Shean.
+                                “A Spatially Resolved Estimate of High Mountain Asia Glacier Mass Balances, 2000–2016.”
+                                <i>Nature Geoscience</i> 10 (2017): 668–673.
+                                https://doi.org/10.1038/ngeo2999.
+                            </li>
+                            <li>
+                                Shean, David E., et al. “A Systematic, Regional Assessment of High Mountain Asia Glacier Mass Balance.”
+                                <i>Frontiers in Earth Science</i> 7 (2020).
+                                https://doi.org/10.3389/feart.2019.00363.
+                            </li>
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Lakes and Lake Expansion:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>
+                                Zhang, Guoqing, et al. “Lake Area Variations on the Tibetan Plateau from the 1970s to 2010.”
+                                <i>Journal of Hydrology</i> 410 (2011): 57–68.
+                                https://doi.org/10.1016/j.jhydrol.2011.08.036.
+                            </li>
+                            <li>
+                                Lei, Yanbin, and Tandong Yao. “Unprecedented Lake Expansion in 2017–2018 on the Tibetan Plateau:
+                                Processes and Environmental Impacts.”
+                                <i>Remote Sensing of Environment</i> 231 (2019).
+                                https://doi.org/10.1016/j.rse.2019.111269.
+                            </li>
+                            <li>
+                                Lei, Yanbin, et al. “Climate Change and Lake Expansion in the Tibetan Plateau.”
+                                <i>Hydrological Processes</i> 28, no. 7 (2014): 2738–2750.
+                                https://doi.org/10.1002/hyp.9818.
+                            </li>
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Braided Rivers and Hydrological Variability:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>
+                                Li, Y., et al. “Hydrological Variability and Channel Adjustment in High-Altitude Braided Rivers
+                                of the Tibetan Plateau.”
+                                <i>Science of the Total Environment</i> (2023).
+                            </li>
+                            <li>
+                                Ashmore, Peter. “Morphology and Dynamics of Braided Rivers.”
+                                In <i>River Channels: Environment and Process</i>, edited by A. Gurnell and G. Petts.
+                                Oxford: Blackwell, 1995.
+                            </li>
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Hydropower and River Regulation (Lijiaxia):</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>
+                                Qinghai News. “Twenty Years of Operation of the Lijiaxia Hydropower Station.”
+                                March 9, 2020.
+                                http://www.qhnews.com/newscenter/system/2020/03/09/013107553.shtml.
+                            </li>
+                            <li>
+                                Qiang, Du. “[科普中国]-李家峡水电站 [Popular Science China] - Lijiaxia Hydropower Station.” 图文详情 China Science
+                                Communication, November 24, 2018. https://cloud.kepuchina.cn/newSearch/imgText?id=6969081381254328320.
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Environmental Context:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>
+                                Central Tibetan Administration. “Tibet’s Environment and Development Issues.”
+                                Accessed 2025.
+                                https://tibet.net/important-issues/tibets-environment-and-development-issues/.
+                            </li>
+                        </ul>
+                        <p class="text-amber-200">
+                            <span class="font-semibold">Artwork:</span>
+                        </p>
+                        <ul class="list-disc pl-5 space-y-2 chicago-bib">
+                            <li>Woaber. “Avalokiteśvara.” Nomadic Tibet, April 16, 2021.
+                                https://www.nomadictibet.com/avalokitesvara/.</li>
+                            <li>Aniko. <i>Green Tara</i>. ca. 1260s; mounted 2020. Cleveland Museum of Art.
+                                https://www.clevelandart.org/art/1970.156
+                                .</li>
+                            <li><i>Thangka Depicting Prajnaparamita</i>. 19th century. Distemper on cloth. Tibet. Formerly in the collection of
+                            Astrid Ibsen-Sorensen, collected in China before 1938; by descent. https://www.sothebys.com/en/buy/auction/2019/important-chinese-art/a-thangka-depicting-prajnaparamita-tibet-19th.</li>
+                        </ul>
+                        <div class="mt-6">
+                            <a class="btn-year-nav inline-flex items-center text-yellow-300 gap-2 px-4 py-2"
+                                href="index.html">Back to
+                                map</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
         </main>
+    </div>
 
-        <script src="js/hamburger.js"></script>
-        <script>
-            fetch("partials/hamburger.html")
-                .then(res => res.text())
-                .then(html => {
-                    document.getElementById("hamburger-mount").innerHTML = html;
+    <script src="js/hamburger.js"></script>
+    <script>
+        // Background + title fade-in (not dependent on the hamburger partial loading)
+        window.addEventListener("load", () => {
+            const hero = document.getElementById("hero");
+            const title = document.getElementById("site-title");
+            requestAnimationFrame(() => document.body.classList.add("bg-visible"));
+            setTimeout(() => { if (hero) hero.classList.add("visible"); }, 700);
+            setTimeout(() => { if (title) title.classList.add("visible"); }, 1100);
+        });
 
-                    // Now that it exists, wire it up
-                    initHamburgerMenu();
-                })
-                .catch(err => console.error("Hamburger load failed", err));
-        </script>
+        fetch("partials/hamburger.html")
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP ${res.status} for partials/hamburger.html`);
+                return res.text();
+            })
+            .then(html => {
+                document.getElementById("hamburger-mount").innerHTML = html;
+                initHamburgerMenu();
+            })
+            .catch(err => console.error("Hamburger load failed", err));
+    </script>
 
 </body>
 

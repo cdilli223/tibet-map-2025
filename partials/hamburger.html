@@ -1,15 +1,14 @@
-<div id="hamburger-zone" class="hamburger-zone">
-    <button id="hamburger-btn" class="hamburger-btn" aria-label="Menu" aria-expanded="false">
-        <div class="hamburger-lines">
-            <span></span>
-            <span></span>
-            <span></span>
-        </div>
+<div id="hamburger-zone" class="hamburger-zone" aria-label="Site menu hotzone">
+    <button id="hamburger-btn" class="hamburger-btn" aria-expanded="false" aria-controls="hamburger-menu">
+        <span class="hamburger-lines" aria-hidden="true">
+            <span></span><span></span><span></span>
+        </span>
+        <span class="sr-only">Open menu</span>
     </button>
 
-    <nav id="hamburger-menu" class="hamburger-menu hidden">
-        <a href="index.html">Map</a>
-        <a href="about.html">About</a>
-        <a href="sources.html">Sources</a>
+    <nav id="hamburger-menu" class="hamburger-menu" aria-hidden="true">
+        <a class="hamburger-item" href="index.html">Map</a>
+        <a class="hamburger-item" href="about.html">About</a>
+        <a class="hamburger-item" href="sources.html">Sources</a>
     </nav>
 </div>

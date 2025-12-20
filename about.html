@@ -2,73 +2,96 @@
 <html lang="en">
 
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>About – Historical Hydrology of Tibet</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>About | Historical Hydrology of Tibet</title>
 
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&display=swap" rel="stylesheet">
-    <link rel="icon" href="favicon.png">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="icon" href="favicon.png" sizes="any">
 
-    <style>
-        body {
-            margin: 0;
-            min-height: 100vh;
-            background: #c98f66;
-            font-family: system-ui, sans-serif;
-        }
-
-        .tibetan-title {
-            font-family: "Cinzel", serif;
-            letter-spacing: 0.2em;
-            text-transform: uppercase;
-        }
-
-        .main-card {
-            border-radius: 1.5rem;
-            box-shadow:
-                0 25px 50px -12px rgba(15, 23, 42, .65),
-                0 0 0 1px rgba(15, 23, 42, .15);
-            background: #fef3c7;
-        }
-    </style>
+    <link rel="stylesheet" href="css/site.css">
 </head>
 
-<body>
-    <div id="hamburger-mount"></div>
-    <header class="py-10 text-center">
-        <h1 class="tibetan-title text-2xl text-slate-900">About This Map</h1>
-    </header>
+<body class="page-about">
+    <div class="min-h-screen flex flex-col">
+        <div id="hamburger-mount"></div>
 
-    <main class="max-w-4xl mx-auto px-6 pb-16">
-        <div class="main-card p-6 md:p-8 text-slate-900 leading-relaxed space-y-4">
-            <p>
-                This project assembles time-sliced satellite imagery across the Tibetan Plateau
-                to make hydrological change legible across decades.
-            </p>
-            <p>
-                Lakes expand, glaciers retreat, rivers braid and unbraid. The map is not exhaustive;
-                it is curated to reveal patterns that are otherwise difficult to perceive.
-            </p>
-            <p>
-                Imagery is interpreted, not neutral. This site favors clarity over completeness.
-            </p>
-        </div>
-    </main>
+        <header id="hero" class="fade-in">
+            <div class="bg-gradient-to-b from-black/40 via-black/20 to-transparent">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-10 lg:py-12">
+                    <div class="flex flex-col items-center gap-4 md:gap-5">
+                        <h1 id="site-title"
+                            class="tibetan-title text-2xl sm:text-3xl md:text-4xl lg:text-5xl text-amber-100 text-shadow-soft tracking-[0.25em] text-center fade-in">
+                            ABOUT THIS MAP
+                        </h1>
+                        <p class="mt-1 max-w-xl text-center text-sm md:text-base text-amber-100/90">
+                            Magnifying hydrological change in Tibet through satellite imagery.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1">
+            <section class="py-6 md:py-8 lg:py-10">
+                <div class="max-w-4xl mx-auto px-3 sm:px-6 lg:px-8">
+                    <div
+                        class="main-card px-5 sm:px-6 md:px-8 py-6 md:py-7 border border-yellow-900/40 fade-in fade-delay-1">
+                        <h2 class="tibetan-title text-base md:text-lg tracking-[0.2em] text-amber-100/90 mb-4">Chronology of Change on the Tibetan Plateau</h2>
+
+                        <div class="text-sm md:text-base leading-relaxed text-amber-100/90 space-y-4">
+                            <p>
+                                This project stitches together time slices of satellite imagery across the Tibetan
+                                Plateau, with a focus
+                                on changing lakes, glaciers, and river corridors.
+                            </p>
+                            <p class="mt-4">
+                                These images are sourced from publicly available satellite archives (Google Earth
+                                Engine), primarily Landsat, USGC, NASA and Sentinel data. Efforts to document the
+                                surface of the Earth from these institutions started as far back as
+                                the 1970s. However, publicly released from Landsat, starting in 1984, hence the common
+                                starting date. The power of
+                                these images in providing a multi-decadal view of environmental change is significant
+                                and poignant.
+                            </p>
+                            <p class="mt-4">
+                                Although the set of reference scenes dispalyed here span over several decades and
+                                highlight key hydrological changes
+                                at a glance, these images represent only a small portion
+                                of changes that have been and are occurring across the plateau. The hope is that this
+                                map will be updated over time.
+                                to reflect developing knowledge. For a more comprehensive understanding, further
+                                exploration of satellite archives
+                                and scientific literature is encouraged.
+                            </p>
+                        </div>
+
+                        <div class="mt-6">
+                            <a class="btn-year-nav inline-flex items-center text-yellow-300 gap-2 px-4 py-2" href="index.html">Back to
+                                map</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
 
     <script src="js/hamburger.js"></script>
     <script>
-        fetch("partials/hamburger.html")
-            .then(res => res.text())
-            .then(html => {
-                document.getElementById("hamburger-mount").innerHTML = html;
+        // background + staged fade
+        requestAnimationFrame(() => document.body.classList.add("bg-visible"));
+        setTimeout(() => document.getElementById("hero")?.classList.add("visible"), 650);
+        setTimeout(() => document.getElementById("site-title")?.classList.add("visible"), 950);
+        setTimeout(() => document.querySelector("main .fade-in")?.classList.add("visible"), 1200);
 
-                // Now that it exists, wire it up
-                initHamburgerMenu();
-            })
+        // hamburger partial
+        fetch("partials/hamburger.html")
+            .then(r => { if (!r.ok) throw new Error(`HTTP ${r.status}`); return r.text(); })
+            .then(html => { document.getElementById("hamburger-mount").innerHTML = html; initHamburgerMenu(); })
             .catch(err => console.error("Hamburger load failed", err));
     </script>
-
 </body>
 
 </html>
