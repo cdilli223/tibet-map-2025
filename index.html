@@ -229,107 +229,6 @@
         function baseImageForYear(year) {
             return YEAR_IMAGES[year] || YEAR_IMAGES[2020];
         }
-
-        // POIs defined in original bottom-origin coordinates (y from bottom).
-        // const POIS = [
-        //     {
-        //         name: 'Himalaya Mountains',
-        //         xy: [230, 1100],
-        //         image: 'images/himalaya_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Overview of the high Himalayan range forming the southern boundary of the Tibetan Plateau, with extensive snow and glacier coverage feeding major Asian river systems.',
-        //             1990: 'By the early 1990s, satellite imagery begins to show subtle retreat of seasonal snowlines and thinning of some lower-elevation glaciers.',
-        //             2000: 'Around 2000, glacier retreat becomes more discernible in several Himalayan sub-ranges, reflecting sustained regional warming trends.',
-        //             2010: 'In the 2010s, accelerated glacial mass loss contributes to altered seasonal runoff patterns, increasing meltwater contribution during warmer months.',
-        //             2020: 'By 2020, continued glacier retreat and reduced snow persistence are evident across much of the Himalaya, with implications for downstream water availability.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Central Tibetan Lakes',
-        //         xy: [620, 1325],
-        //         image: 'images/central_lakes_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Cluster of central plateau lakes with relatively stable shorelines, reflecting long-standing closed-basin hydrological balance.',
-        //             1990: 'In the 1990s, some lakes begin showing early signs of expansion as precipitation patterns and meltwater inputs subtly increase.',
-        //             2000: 'By 2000, satellite records indicate noticeable growth in several central Tibetan lakes, suggesting a shift toward wetter conditions.',
-        //             2010: 'During the 2010s, many lakes expand further and in some cases coalesce, reshaping local drainage and basin geometry.',
-        //             2020: 'By 2020, central Tibetan lakes are among the most visibly expanded features on the plateau, reflecting multi-decadal climate-driven hydrological change.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Arunachal Pradesh Border',
-        //         xy: [310, 2160],
-        //         image: 'images/arunachal_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Eastern Himalayan border region characterized by complex drainage patterns where Tibetan Plateau waters transition toward the Brahmaputra basin.',
-        //             1990: 'By the 1990s, subtle changes in river course geometry and floodplain moisture appear in satellite imagery, linked to monsoonal variability.',
-        //             2000: 'Around 2000, increased seasonal runoff and shifting precipitation patterns influence river morphology near the plateau’s eastern edge.',
-        //             2010: 'In the 2010s, intensified monsoon dynamics and upstream meltwater contribute to greater hydrological variability across the border region.',
-        //             2020: 'By 2020, this region reflects the combined influence of climate variability, upstream glacier melt, and complex transboundary river dynamics.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Lijiaxia Hydroelectric Dam',
-        //         xy: [1020, 2600],
-        //         image: 'images/kanbula_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Before dam construction, the Kanbula region exhibits natural river bends and seasonal flow variability shaped by snowmelt and rainfall.',
-        //             1990: 'Early stages of hydropower planning and site preparation begin to influence river management in the Kanbula area.',
-        //             1996: 'Construction of the Lijiaxia Hydroelectric Dam finishes in 1996. Filling of the reservoir begins shortly before the capture of this image on December 26, 1996.',
-        //             2000: 'By 2000, the reservoir is clearly established, with regulated water levels altering downstream flow timing and sediment transport.',
-        //             2010: 'In the 2010s, long-term hydrological regulation smooths seasonal discharge extremes and reshapes surrounding water bodies.',
-        //             2020: 'By 2020, the river system in this region reflects decades of managed flow, contrasting sharply with pre-dam hydrological patterns.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Yurba Co Region',
-        //         xy: [950, 1350],
-        //         image: 'images/yurba_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Yurba lake region shows relatively small, discrete lake surfaces typical of central plateau conditions in the early Landsat era.',
-        //             1990: 'During the 1990s, lake margins begin to expand slightly as regional precipitation and meltwater inputs increase.',
-        //             2000: 'By 2000, Yurba and nearby lakes display more pronounced shoreline growth, indicating a sustained shift in basin water balance.',
-        //             2010: 'In the 2010s, satellite observations reveal significant lake expansion and rising water levels across the region.',
-        //             2020: 'By 2020, Yurba is part of a broader pattern of rapidly expanding Tibetan Plateau lakes driven by long-term climate change.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Selin Co',
-        //         xy: [500, 1550],
-        //         image: 'images/selin_1984.jpg',
-        //         infoByYear: {
-        //             1984: 'Selin Co, a large saltwater lake in the central Tibetan Plateau, shows a relatively stable shoreline and surrounding wetlands.',
-        //             1990: 'In the 1990s, slight expansions in lake margins are observed, reflecting subtle changes in water balance.',
-        //             2000: 'By 2000, Selin Co displays noticeable growth in lake area, indicating a trend toward wetter conditions.',
-        //             2010: 'During the 2010s, accelerated lake expansion is evident, with rising water levels and altered wetland extent.',
-        //             2020: 'By 2020, Selin Co is among the most visibly expanded lakes on the plateau, showcasing significant hydrological change.'
-        //         }
-        //     },
-        //     {
-        //         name: 'Braided Yarlung Tsanpo',
-        //         xy: [230, 1760],
-        //         image: 'images/braids_1984.jpg',
-        //         years: YEARS_ZHANANG,
-        //         autoplay: {
-        //             enabled: true,
-        //             loop: false,
-        //             // time per frame, in ms
-        //             dwellMs: 1600,
-        //             // extra pause on key years for reading
-        //             keyDwellMs: 3200,
-        //             keyYears: [1984, 1990, 2000, 2010, 2020]
-        //         },
-        //         infoByYear: {
-        //             1984: 'Broad braided channels of the Yarlung Tsangpo River near Zhanang reflect strong seasonal flow variability and high sediment transport.',
-        //             1990: 'In the 1990s, channel patterns remain highly dynamic, with exposed gravel bars and shifting braid geometry.',
-        //             2000: 'By 2000, subtle changes in braid width and bar exposure suggest evolving discharge and sediment regimes.',
-        //             2010: 'During the 2010s, increased meltwater and precipitation variability influence channel stability and seasonal inundation.',
-        //             2020: 'By 2020, the braided reach continues to express hydrological variability tied to upstream glacier melt and changing climate conditions.'
-        //         }
-        //     }
-        // ];
-
-        // Helper years you already have
         const KEY_YEARS = [1984, 1990, 2000, 2010, 2020];
 
         const POIS = [
@@ -338,11 +237,11 @@
                 xy: [230, 1100],
                 image: 'images/himalaya_1984.jpg',
                 infoByYear: {
-                    1984: "Satellite imagery from the early Landsat era shows extensive seasonal snow cover and broad glacier extents across the Himalayan range, forming a major source region for downstream Asian river systems.",
-                    1990: "By the late 1980s and early 1990s, early signs of glacier thinning and retreat appear in several Himalayan sub-regions, consistent with negative mass balance trends identified in later geodetic reconstructions (Bolch et al. 2012).",
-                    2000: "Around 2000, glacier retreat becomes more spatially coherent across the Himalaya, aligning with broader patterns of thinning documented across High Mountain Asia using satellite elevation differencing (Brun et al. 2017).",
-                    2010: "During the 2010s, accelerated mass loss and reduced snow persistence are widely observed, contributing to altered seasonal runoff and increased meltwater variability (Shean et al. 2020).",
-                    2020: "By 2020, sustained glacier thinning and retreat are evident across much of the Himalaya, reflecting long-term warming trends documented across High Mountain Asia."
+                    1984: "Satellite imagery from the early Landsat era shows extensive seasonal snow cover and broad glacier extents across the Himalayan range, a cryospheric store that feeds major downstream river systems (Bolch et al. 2012).",
+                    1990: "By the late 1980s and early 1990s, early signs of thinning and retreat appear in multiple Himalayan sub-regions, consistent with the regional synthesis of changing Himalayan glaciers (Bolch et al. 2012).",
+                    2000: "Around 2000, glacier mass loss becomes measurable at broad scale across High Mountain Asia in geodetic reconstructions, which helps contextualize visible Himalayan retreat in the satellite record (Brun et al. 2017).",
+                    2010: "During the 2010s, continued negative mass balance is observed across High Mountain Asia, aligning with sustained thinning trends used to interpret changing seasonal runoff timing and meltwater variability (Shean et al. 2020).",
+                    2020: "By 2020, the Himalayan cryosphere sits inside a longer arc of persistent mass loss documented for High Mountain Asia from satellite-derived mass-balance assessments (Brun et al. 2017; Shean et al. 2020)."
                 }
             },
 
@@ -351,11 +250,11 @@
                 xy: [620, 1325],
                 image: 'images/central_lakes_1984.jpg',
                 infoByYear: {
-                    1984: "Landsat imagery from the mid-1980s shows central Tibetan Plateau lakes with relatively stable shorelines, reflecting long-standing closed-basin hydrological conditions.",
-                    1990: "During the 1990s, subtle lake expansions begin to appear in several basins, preceding the more pronounced Plateau-wide lake growth identified in later inventories (Zhang et al. 2011).",
-                    2000: "Around 2000, many central Tibetan lakes enter a sustained expansion phase, consistent with regional lake evolution trends documented using multi-decadal Landsat records (Lei and Yao 2018).",
-                    2010: "Throughout the 2010s, accelerated lake expansion is observed across much of the central Plateau, reflecting combined influences of increased precipitation and cryospheric meltwater inputs (Lei et al. 2014).",
-                    2020: "By 2020, central Tibetan lakes are among the most visibly expanded hydrological features on the Plateau, representing one of the most significant landscape-scale changes documented in recent decades."
+                    1984: "Landsat imagery from the mid-1980s shows central Tibetan Plateau lakes with comparatively stable shorelines, a baseline that later inventories use to measure multi-decadal change (Zhu et al. 2019).",
+                    1990: "During the 1990s, subtle expansions begin to appear in several basins, consistent with Tibetan Plateau lake-variation studies that identify early shifts prior to stronger growth in later decades (Zhu et al. 2019; Lei et al. 2014).",
+                    2000: "Around 2000, many central Plateau lakes enter a sustained expansion phase, consistent with climate-linked lake-dynamics work on the Tibetan Plateau (Lei et al. 2014).",
+                    2010: "Throughout the 2010s, accelerated lake expansion becomes hard to miss in many basins, aligning with lake responses attributed to climate drivers and water-balance change (Lei et al. 2014).",
+                    2020: "By 2020, central Tibetan lakes represent one of the most visible Plateau-scale hydrologic reorganizations, with multi-decadal variation and changing tendencies documented in lake-variation syntheses (Zhu et al. 2019) and event-scale expansion analyses that highlight how fast these systems can move (Lei et al. 2023)."
                 }
             },
 
@@ -364,11 +263,11 @@
                 xy: [310, 2160],
                 image: 'images/arunachal_1984.jpg',
                 infoByYear: {
-                    1984: "Early satellite imagery shows complex drainage patterns along the eastern Himalayan margin, where Plateau waters transition toward the Brahmaputra basin.",
-                    1990: "By the 1990s, subtle changes in glacier extent and seasonal runoff are visible, consistent with early-stage retreat observed in the eastern Himalaya (Bolch et al. 2012).",
-                    2000: "Around 2000, increased meltwater contribution and shifting precipitation regimes influence river morphology near the Plateau’s southeastern edge.",
-                    2010: "During the 2010s, intensified monsoon variability and upstream glacier mass loss contribute to greater hydrological variability in transboundary river systems (Brun et al. 2017).",
-                    2020: "By 2020, this region reflects the combined influence of climate-driven glacier retreat and evolving monsoon dynamics documented across the eastern Himalaya."
+                    1984: "Early satellite imagery shows complex drainage and valley networks along the eastern Himalayan margin, where headwaters transition toward the Brahmaputra basin and remain sensitive to upstream cryospheric conditions (Bolch et al. 2012).",
+                    1990: "By the 1990s, modest but visible changes in glacier margins and seasonal snow persistence fit the broader Himalayan glacier-status synthesis (Bolch et al. 2012).",
+                    2000: "Around 2000, glacier mass loss detected across High Mountain Asia provides a quantitative backdrop for interpreting changing meltwater contribution and runoff variability at the southeastern edge of the Plateau (Brun et al. 2017).",
+                    2010: "During the 2010s, continued negative mass balance across High Mountain Asia supports a reading of increased hydrologic variability in transboundary river systems fed by glacierized headwaters (Shean et al. 2020).",
+                    2020: "By 2020, the region reflects the combined influence of sustained glacier retreat and evolving precipitation dynamics, consistent with satellite-based assessments of High Mountain Asia glacier mass balance (Brun et al. 2017; Shean et al. 2020)."
                 }
             },
 
@@ -377,12 +276,12 @@
                 xy: [1020, 2600],
                 image: 'images/kanbula_1984.jpg',
                 infoByYear: {
-                    1984: "Before dam construction, the Kanbula reach of the Yellow River exhibits natural channel curvature and seasonal discharge variability shaped by snowmelt and regional precipitation.",
-                    1990: "During the late 1980s and early 1990s, hydropower planning and site preparation begin to alter river management practices in the Kanbula region.",
-                    1995: "Construction of the Lijiaxia Hydroelectric Dam is completed in 1995, with reservoir impoundment beginning shortly thereafter, fundamentally altering upstream and downstream hydrological conditions (Qiang 2018).",
-                    2000: "By 2000, the reservoir is fully established, with regulated water levels smoothing seasonal discharge variability and modifying sediment transport dynamics (Qinghai News 2020).",
-                    2010: "Throughout the 2010s, long-term flow regulation reshapes surrounding water bodies and river morphology, reflecting decades of managed hydrological control.",
-                    2020: "By 2020, the Kanbula river system reflects sustained hydropower-driven regulation, contrasting sharply with pre-dam hydrological patterns documented in earlier imagery."
+                    1984: "Before dam construction, the Kanbula reach of the Yellow River reads as a more freely expressing channel, with seasonal discharge variability and curvature visible in the pre-impoundment landscape.",
+                    1990: "During the late 1980s and early 1990s, hydropower planning and site preparation begin to shift river management practices in the Kanbula region, setting up the later regime of regulation described in popular-science and institutional reporting (Qiang 2018; Qinghai News 2020).",
+                    1995: "Construction completion and the move toward impoundment mark a structural pivot point for the river system, establishing the hydropower logic that later accounts emphasize in describing the project’s operation and significance (Qiang 2018; Qinghai News 2020).",
+                    2000: "By 2000, the reservoir is fully established and the hydrologic signature becomes visibly managed, consistent with reporting focused on station operation and the long-term regulated system (Qinghai News 2020).",
+                    2010: "Throughout the 2010s, long-term flow regulation continues to reshape surrounding water bodies and river morphology, matching the basic story of sustained operational control emphasized in summaries of the station’s run history (Qinghai News 2020).",
+                    2020: "By 2020, the Kanbula river system reflects sustained hydropower-driven regulation, legible in contrast with earlier imagery and consistent with institutional reporting about the station’s long-term operation (Qinghai News 2020)."
                 }
             },
 
@@ -391,11 +290,11 @@
                 xy: [950, 1350],
                 image: 'images/yurba_1984.jpg',
                 infoByYear: {
-                    1984: "Yurba Co appears as a relatively small, discrete lake typical of central Plateau hydrological conditions in early Landsat imagery.",
-                    1990: "During the 1990s, gradual shoreline expansion becomes visible, aligning with early-stage lake growth observed across nearby basins.",
-                    2000: "Around 2000, Yurba Co shows more pronounced expansion, consistent with Plateau-wide lake area increases documented in Landsat-based lake inventories (Zhang et al. 2011).",
-                    2010: "Throughout the 2010s, continued lake growth reflects rising water levels associated with increased precipitation and cryospheric melt inputs (Lei et al. 2014).",
-                    2020: "By 2020, Yurba Co forms part of a broader pattern of rapidly expanding lakes across the Tibetan Plateau."
+                    1984: "Yurba Co appears as a relatively small, discrete lake typical of central Plateau hydrologic conditions, a baseline that later lake-variation syntheses use for multi-decadal comparisons (Zhu et al. 2019).",
+                    1990: "During the 1990s, gradual shoreline expansion becomes visible, consistent with broader Tibetan Plateau lake-variation timelines that begin to show growth in some basins prior to later acceleration (Zhu et al. 2019).",
+                    2000: "Around 2000, Yurba Co shows clearer expansion, fitting the climate-linked lake-dynamics framing used to interpret Plateau-wide inland-lake change (Lei et al. 2014).",
+                    2010: "Throughout the 2010s, continued lake growth aligns with Tibetan Plateau lake responses linked to climate drivers and water-balance change (Lei et al. 2014).",
+                    2020: "By 2020, Yurba Co sits inside a broader pattern of rapidly expanding lakes across the Tibetan Plateau, consistent with 40-year variation syntheses (Zhu et al. 2019) and event-scale documentation of dramatic expansion phases (Lei et al. 2023)."
                 }
             },
 
@@ -404,11 +303,11 @@
                 xy: [500, 1550],
                 image: 'images/selin_1984.jpg',
                 infoByYear: {
-                    1984: "Selin Co, one of the largest lakes on the central Tibetan Plateau, shows a relatively stable shoreline and surrounding wetlands in early satellite imagery.",
-                    1990: "During the 1990s, modest lake expansion is observed, preceding the more rapid growth documented in later decades.",
-                    2000: "Around 2000, Selin Co enters a sustained expansion phase, consistent with regional lake evolution trends identified in Plateau-scale studies (Lei and Yao 2018).",
-                    2010: "During the 2010s, accelerated lake growth and rising water levels are clearly visible, reshaping wetlands and basin geometry.",
-                    2020: "By 2020, Selin Co represents one of the most prominent examples of large-scale lake expansion on the Tibetan Plateau."
+                    1984: "Selin Co, one of the largest lakes on the central Tibetan Plateau, shows a relatively stable shoreline and wetlands in early satellite imagery, forming part of the baseline period used in long-horizon lake-variation studies (Zhu et al. 2019).",
+                    1990: "During the 1990s, modest expansion is visible, consistent with lake-variation syntheses that detect early-stage changes prior to more rapid growth in later decades (Zhu et al. 2019).",
+                    2000: "Around 2000, Selin Co enters a sustained expansion phase, consistent with inland-lake dynamics attributed to climate-driven changes over the Plateau (Lei et al. 2014).",
+                    2010: "During the 2010s, continued growth and rising levels remain consistent with climate-linked lake response frameworks used for the Plateau’s inland lakes (Lei et al. 2014).",
+                    2020: "By 2020, Selin Co stands as a prominent example of large-scale lake expansion on the Tibetan Plateau, consistent with multi-decadal variation syntheses (Zhu et al. 2019) and the documented capacity for abrupt expansion in certain periods (Lei et al. 2023)."
                 }
             },
 
@@ -425,14 +324,15 @@
                     keyYears: [1984, 1990, 2000, 2010, 2020]
                 },
                 infoByYear: {
-                    1984: "Early imagery shows wide, actively braided channels of the Yarlung Tsangpo near Zhanang, reflecting high sediment loads and strong seasonal discharge variability.",
-                    1990: "Throughout the 1990s, braid geometry remains highly dynamic, with frequent channel shifting and exposed gravel bars.",
-                    2000: "Around 2000, subtle reorganization of braid patterns appears, consistent with evolving discharge regimes influenced by upstream cryospheric change (Li et al. 2023).",
-                    2010: "During the 2010s, increased meltwater contribution and precipitation variability contribute to continued channel instability and seasonal inundation.",
-                    2020: "By 2020, the braided reach continues to express hydrological variability linked to glacier melt and climate-driven changes documented across High Mountain Asia."
+                    1984: "Early imagery shows a wide, actively braided channel near Zhanang, consistent with braided-river morphology where multiple threads, bar building, and rapid reworking track high sediment supply and variable discharge (Ashmore 2013).",
+                    1990: "Throughout the 1990s, braid geometry remains highly dynamic, with frequent thread switching and exposed gravel bars, matching classic braided-river morphodynamics (Ashmore 2013).",
+                    2000: "Around 2000, subtle reorganization of braid threads and bar exposure can be read through the lens of climate-driven shifts in water and sediment flux that braided-river studies on the Tibetan Plateau emphasize (He et al. 2024).",
+                    2010: "During the 2010s, continued variability in inundation and channel positioning remains consistent with braided-river sensitivity to changing discharge and sediment regimes (Ashmore 2013; He et al. 2024).",
+                    2020: "By 2020, the braided reach continues to express hydrologic variability in a way that braided-river studies explicitly tie to climate-driven water and sediment flux change on the Qinghai-Tibet Plateau (He et al. 2024)."
                 }
             }
         ];
+
 
 
         const TITLE_BADGE_URL = "images/Avalokitesvara.jpg";
